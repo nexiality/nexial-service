@@ -39,17 +39,19 @@ public class UtilityHelper {
         return finalJson;
     }
 
-    public static void getProjectList(Set<String> subProjectSet, HashMap<String, Set<String>> projectMap, Matcher m) {
+    public static void getProjectList(HashMap<String, Set<String>> projectMap, Matcher m) {
         String project = StringUtils.substringBefore(m.group(1), ".");
         String subProject = StringUtils.substringAfter(m.group(1), ".");
-        subProjectSet.add(subProject);
-        if (StringUtils.isNotEmpty(project) && !projectMap.containsKey(project)) {
-            projectMap.put(project, subProjectSet);
+        Set<String> newSet = new HashSet();
+        newSet.add(subProject);
+        if (!projectMap.containsKey(project)) {
+            projectMap.put(project, newSet);
         } else {
-            Set<String> set = new HashSet<>(projectMap.get(project));
-            set.addAll(subProjectSet);
-            projectMap.put(project, set);
-            subProjectSet.clear();
+            Set<String> existingSet = projectMap.get(project);
+            newSet.add(subProject);
+            Set<String> finalSet = new HashSet(newSet);
+            finalSet.addAll(existingSet);
+            projectMap.put(project, finalSet);
         }
     }
 

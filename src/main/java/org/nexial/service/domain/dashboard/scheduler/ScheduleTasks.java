@@ -135,7 +135,6 @@ public class ScheduleTasks {
     }
 
     private void updateProjectList(List<String> keys, String projectPath) {
-        Set<String> subProjectSet = new HashSet<>();
         HashMap<String, Set<String>> projectMap = new HashMap<>();
         Gson gson = new Gson();
         String REGEX_AWS_PROJECT_PATTERN = "((.*)?)(\\/summary\\_output\\.json$)";
@@ -143,7 +142,7 @@ public class ScheduleTasks {
             Pattern p = Pattern.compile(projectPath + REGEX_AWS_PROJECT_PATTERN);
             Matcher m = p.matcher(key);
             if (m.find()) {
-                UtilityHelper.getProjectList(subProjectSet, projectMap, m);
+                UtilityHelper.getProjectList(projectMap, m);
             }
         }
         String json = gson.toJson(projectMap);
