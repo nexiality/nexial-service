@@ -1,0 +1,89 @@
+buildscript {
+    ext {
+        ext.kotlin_version = '1.3.41'
+        springBootVersion = '2.1.6.RELEASE'
+    }
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
+        classpath "org.jetbrains.kotlin:kotlin-allopen:$kotlin_version"
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
+
+apply plugin: 'java'
+apply plugin: 'org.springframework.boot'
+apply plugin: 'io.spring.dependency-management'
+apply plugin: 'kotlin'
+apply plugin: 'kotlin-spring'
+apply plugin: 'distribution'
+
+group 'com.nexialservice'
+version '1.0-SNAPSHOT'
+
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+//create a single Jar with all dependencies
+task createJar(type: Jar) {
+    manifest {
+        attributes 'Implementation-Title': 'nexial-service',
+                   'Implementation-Version': version
+    }
+    baseName = project.name
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+    zip64 = true
+}
+task distro {
+    group "Build"
+    description "build project clean room and update lib/ directory"
+    mustRunAfter clean
+    dependsOn build
+}
+
+distributions {
+    main {
+        contents {
+            into('lib') {
+                from jar
+                from 'lib'
+                from(project.configurations.runtime)
+            }
+            into('template') {
+                from 'template'
+            }
+            into('bin') {
+                from 'bin'
+            }
+        }
+    }
+}
+
+
+
+dependencies {
+    compile ('org.springframework.boot:spring-boot-dependencies:2.1.6.RELEASE')
+    compile ('org.springframework.boot:spring-boot-starter-web')
+    compile("org.springframework.boot:spring-boot-starter-data-jpa")
+    compile ('org.xerial:sqlite-jdbc:3.8.11.2')
+
+    compile("com.amazonaws:aws-java-sdk-core:+")
+    compile("com.amazonaws:aws-java-sdk-s3:+")
+    compile ('com.google.code.gson:gson:2.8.1')
+    compile ('org.apache.commons:commons-lang3:+')
+    compile("commons-io:commons-io:+")
+    compile("org.apache.commons:commons-collections4:4.3")
+    compile("commons-cli:commons-cli:+")
+    compile("org.jdom:jdom2:+")
+    compile("com.fasterxml.jackson.module:jackson-module-kotlin:2.9.+")
+    compile ('org.apache.commons:commons-configuration2:2.5')
+    compile('commons-beanutils:commons-beanutils:1.9.3')
+    compile fileTree(dir: 'lib', include: '*.jar')
+}
