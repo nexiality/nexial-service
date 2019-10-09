@@ -17,7 +17,6 @@ apply plugin: 'distribution'
 
 group 'org.nexialservice'
 version '1.0-SNAPSHOT'
-
 sourceCompatibility = 1.8
 
 repositories {
@@ -65,8 +64,10 @@ distributions {
 
 dependencies {
     compile fileTree(dir: 'lib-nexial', include: '*.jar')
-    compile ('org.springframework.boot:spring-boot-dependencies:2.1.6.RELEASE')
-    compile ('org.springframework.boot:spring-boot-starter-web')
+    compile('org.springframework.boot:spring-boot-dependencies:2.1.6.RELEASE')
+    compile('org.springframework.boot:spring-boot-starter-web')
+    compile('org.springframework.boot:spring-boot-starter-logging')
     compile("org.springframework.boot:spring-boot-starter-data-jpa")
-    compile ('org.xerial:sqlite-jdbc:3.8.11.2')
+    compile('org.xerial:sqlite-jdbc:3.8.11.2')
+    compile("org.apache.commons:commons-lang3:+")
 }
