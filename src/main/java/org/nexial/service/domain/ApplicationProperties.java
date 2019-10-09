@@ -1,5 +1,6 @@
 package org.nexial.service.domain;
 
+import org.nexial.service.domain.utils.UtilityHelper;
 import org.springframework.stereotype.Component;
 
 import static org.nexial.service.domain.utils.Constants.*;
@@ -17,14 +18,17 @@ public class ApplicationProperties extends ReloadApplicationProperties {
 
     public String getRegion() { return environment.getProperty(CLOUD_AWS_REGION); }
 
-    public String getResourceConfigCountPath() { return environment.getProperty(CLOUD_AWS_RESOURCE_CONFIG_PATH); }
-
-    public String getLocalProjectsListPath() { return environment.getProperty(LOCAL_PROJECTSLIST_JSON); }
-
-    public String getLocalProjectSummaryPath() { return environment.getProperty(LOCAL_SUMMARYOUTPUT_JSON); }
-
-    public String getLocalResourceConfigPath() { return environment.getProperty(LOCAL_RESOURCE_CONFIG_JSON); }
-
     public String getWorkerTimeout() { return environment.getProperty(EXECUTOR_WORKER_THREAD_TIMEOUT); }
 
+    public String getLocalArtifactsPath() {
+        return UtilityHelper.getPath(environment.getProperty(LOCAL_ARTIFACTS_PATH));
+    }
+
+    public String getStorageLocation() {
+        return environment.getProperty(STORAGE_LOCATION);
+    }
+
+    public String getLocalExecutionSummaryPath() {
+        return UtilityHelper.getPath(environment.getProperty(LOCAL_EXECUTION_SUMMARY_PATH));
+    }
 }

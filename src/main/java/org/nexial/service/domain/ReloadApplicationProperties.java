@@ -46,7 +46,11 @@ public abstract class ReloadApplicationProperties {
         assert filePath.exists();
         assert filePath.canRead();
         inputStream = Files.newInputStream(filePath.toPath());
-        properties.load(inputStream);
+        try {
+            properties.load(inputStream);
+        } finally {
+            inputStream.close();
+        }
         environment.getPropertySources().addFirst(new PropertiesPropertySource(CONFIGURATION_NAME,
                                                                                properties));
     }
