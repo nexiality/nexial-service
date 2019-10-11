@@ -3,30 +3,30 @@ package org.nexial.service.domain.dashboard.service;
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.StopWatch;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFComment;
 import org.apache.poi.xssf.usermodel.XSSFRow;
-import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.nexial.commons.utils.DateUtility;
 import org.nexial.commons.utils.FileUtil;
 import org.nexial.commons.utils.RegexUtils;
 import org.nexial.core.excel.Excel;
+import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.excel.ExcelAddress;
 import org.nexial.core.excel.ExcelArea;
 import org.nexial.core.utils.JSONPath;
 import org.nexial.core.utils.JsonUtils;
 import org.nexial.service.domain.ApplicationProperties;
 import org.nexial.service.domain.dashboard.IFileStorage;
+import org.nexial.service.domain.dashboard.scheduler.Activity;
+import org.nexial.service.domain.dashboard.scheduler.Activity.StepData;
 import org.nexial.service.domain.dbconfig.SQLiteManager;
 import org.nexial.service.domain.utils.LoggerUtils;
 import org.springframework.beans.factory.BeanFactory;
@@ -37,6 +37,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
 import static org.apache.commons.lang3.StringUtils.EMPTY;
+import static org.nexial.core.CommandConst.CMD_REPEAT_UNTIL;
 import static org.nexial.core.NexialConst.DEF_CHARSET;
 import static org.nexial.core.NexialConst.Data.*;
 import static org.nexial.core.NexialConst.Project.NEXIAL_EXECUTION_TYPE_PLAN;
@@ -293,7 +294,8 @@ public class ProcessRecordService {
 
                 insertExecutionData(iterationId, execution, iterationObject.getString("executionLevel"));
                 insertExecutionMetaData(iterationId, iterationObject);
-                JSONObject iterationData = insertIterationData(iterationId, testScriptLink, projectName, name);
+                Map<String, Map<Activity, List<StepData>>> iterationData =
+                    insertIterationData(iterationId, testScriptLink, projectName, name);
 
                 // add scenario details
                 JSONArray scenarios = iterationObject.getJSONArray("nestedExecutions");
@@ -320,19 +322,22 @@ public class ProcessRecordService {
 
                         insertExecutionData(activityId, execution, activityObject.getString("executionLevel"));
                         insertExecutionMetaData(activityId, activityObject);
-                        insertStepDetails(activityId, iterationData, scenarioName, activityName);
+                        if (!iterationData.containsKey(scenarioName)) { return; }
+
+                        Map<Activity, List<StepData>> scenarioData = iterationData.get(scenarioName);
+                        insertStepDetails(activityId, scenarioData, activityName, act + 1);
                     }
                 }
             }
         }
     }
 
-    private JSONObject insertIterationData(String iterationId,
-                                           String testScriptLink,
-                                           String projectName,
-                                           String runId) {
-        String path = getLocalPath(testScriptLink, projectName, runId);
-        return parseExcel(iterationId, path);
+    private Map<String, Map<Activity, List<StepData>>> insertIterationData(String iterationId,
+                                                                           String testScriptLink,
+                                                                           String projectName,
+                                                                           String runId) {
+        // String path = getLocalPath(testScriptLink, projectName, runId);
+        return parseExcel(iterationId, getLocalPath(testScriptLink, projectName, runId));
     }
 
     private String getLocalPath(String testScriptLink, String projectName, String runId) {
@@ -343,12 +348,12 @@ public class ProcessRecordService {
         return path;
     }
 
-    private JSONObject parseExcel(String iterationId, String path) {
-            /*StopWatch watch = new StopWatch();
-            watch.start();*/
+    private Map<String, Map<Activity, List<StepData>>> parseExcel(String iterationId, String path) {
+        StopWatch watch = new StopWatch();
+        watch.start();
         File f = new File(path);
         Excel excel;
-        JSONObject scenarios = new JSONObject();
+        Map<String, Map<Activity, List<StepData>>> scenarios = new HashMap<>();
         try {
             excel = new Excel(f, false, false);
             excel.getWorksheetsStartWith("").forEach(worksheet -> {
@@ -359,58 +364,82 @@ public class ProcessRecordService {
                     return;
                 }
 
-                XSSFSheet sheet = worksheet.getSheet();
-                int lastCommandRow = sheet.getLastRowNum();
-                ExcelArea area = new ExcelArea(worksheet,
-                                               new ExcelAddress(FIRST_STEP_ROW + ":" + COL_REASON + lastCommandRow),
-                                               false);
+                ExcelAddress address = new ExcelAddress(FIRST_STEP_ROW + ":" + COL_REASON +
+                                                        worksheet.getSheet().getLastRowNum());
+                ExcelArea area = new ExcelArea(worksheet, address, false);
                 String testCase = null;
-                JSONObject activities = new JSONObject();
-                JSONArray steps = new JSONArray();
-                for (int i = 0; i < area.getWholeArea().size(); i++) {
-                    List<XSSFCell> row = area.getWholeArea().get(i);
+                int activitySeq = 0;
+                Map<Activity, List<StepData>> activities = new HashMap<>();
+                List<StepData> steps = new ArrayList<>();
+                List<List<XSSFCell>> wholeArea = area.getWholeArea();
+
+                int size = wholeArea.size();
+                for (int rowIndex = 0; rowIndex < size; rowIndex++) {
+                    List<XSSFCell> row = wholeArea.get(rowIndex);
                     if (isEmptyRow(row)) { break; }
 
                     String activity = Excel.getCellValue(row.get(COL_IDX_TESTCASE));
                     if (StringUtils.isNotBlank(activity)) {
-                        if (testCase != null) { activities.put(testCase, steps); }
+                        if (testCase != null) { activities.put(new Activity(testCase, activitySeq), steps); }
                         testCase = activity;
-                        steps = new JSONArray();
+                        activitySeq++;
+                        steps = new ArrayList<>();
                     }
-                    JSONObject step = addStepDetails(row);
+                    List<List<Object>> stepLinks = new ArrayList<>();
+                    List<List<Object>> logs = new ArrayList<>();
+                    List<Object> step = addStepDetails(row);
 
                     // add stepLinks and logsInfo if it is there
-                    int j = 0;
-                    while (true) {
-                        XSSFRow nextRow = sheet.getRow(row.get(1).getRowIndex() + j + 1);
-                        if (!isContainLogs(nextRow)) { break; }
-                        step = addStepLogDetails(step, nextRow);
-                        j++;
+                    int index = 0;
+                    boolean isRepeatUntil = StringUtils.equals(step.get(1) + "." + step.get(2), CMD_REPEAT_UNTIL);
+
+                    // Might need to change logic
+                    while (!isRepeatUntil) {
+                        int rowIdx = rowIndex + index + 1;
+                        if (rowIdx >= size) { break; }
+                        if (addStepMeta(wholeArea.get(rowIdx), stepLinks, logs)) { break; }
+                        index++;
                     }
-                    i += j;
-                    steps.put(step);
+                    StepData stepData = new StepData(step, stepLinks, logs);
+                    rowIndex += index;
+                    steps.add(stepData);
+
+                    // to avoid activity name problem in execution-detail.json if repeat-until steps has activity
+                    if (isRepeatUntil) {
+                        int totalSteps = Integer.parseInt(Excel.getCellValue(row.get(COL_IDX_PARAMS_START)));
+                        for (index = 0; index < totalSteps; index++) {
+                            List<XSSFCell> row1 = wholeArea.get(rowIndex + index + 1);
+                            steps.add(new StepData(addStepDetails(row1), new ArrayList<>(), new ArrayList<>()));
+                            //  todo check for screenshots and logs if any
+                        }
+                        rowIndex += totalSteps;
+                    }
                 }
-                activities.put(testCase, steps);
+                activities.put(new Activity(testCase, activitySeq), steps);
                 scenarios.put(worksheet.getName(), activities);
             });
             excel.close();
-        } catch (IOException e) {
-            e.getMessage();
+            watch.stop();
+            System.out.println("/----------------------------------------------------------------\\");
+            System.out
+                .println("Time taken to complete parse excel " + /*row.get("ProjectName") + "/" + row.get("Prefix")*/
+                         " is " + watch.getTime());
+            System.out.println("\\----------------------------------------------------------------/");
+
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
         } finally {
             return scenarios;
         }
     }
 
-    private static JSONObject addStepDetails(List<XSSFCell> row) {
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("rowNo", row.get(0).getRowIndex() + 1);
-        jsonObject.put("description", Excel.getCellValue(row.get(COL_IDX_DESCRIPTION)));
-        jsonObject.put("target", Excel.getCellValue(row.get(COL_IDX_TARGET)));
-        jsonObject.put("command", Excel.getCellValue(row.get(COL_IDX_COMMAND)));
-        jsonObject.put("flowControl", Excel.getCellValue(row.get(COL_IDX_FLOW_CONTROLS)));
-        jsonObject.put("result", Excel.getCellValue(row.get(COL_IDX_RESULT)));
-        jsonObject.put("reason", Excel.getCellValue(row.get(COL_IDX_REASON)));
-        jsonObject.put("elapsedTime", Excel.getCellValue(row.get(COL_IDX_ELAPSED_MS)));
+    private static List<Object> addStepDetails(List<XSSFCell> row) {
+        List<Object> list = new ArrayList<>();
+        list.add(Excel.getCellValue(row.get(COL_IDX_DESCRIPTION)));
+        list.add(Excel.getCellValue(row.get(COL_IDX_TARGET)));
+        list.add(Excel.getCellValue(row.get(COL_IDX_COMMAND)));
+        List<Object> params = new ArrayList<>();
+        List<Object> paramsOutput = new ArrayList<>();
         for (int i = COL_IDX_PARAMS_START; i <= COL_IDX_PARAMS_END; i++) {
             XSSFCell cell = row.get(i);
             String cellValue = Excel.getCellValue(cell);
@@ -422,70 +451,52 @@ public class ProcessRecordService {
                 originalValue = StringUtils.removeStart(cellComment.getString().toString(), "test script:\r\n");
                 originalValue = StringUtils.removeStart(originalValue, "test script:\n");
             }
-            jsonObject.put("paramOutput" + (i - COL_IDX_PARAMS_START + 1), getLink(cellValue));
-            jsonObject.put("param" + (i - COL_IDX_PARAMS_START + 1), getLink(originalValue));
+            params.add(getLink(originalValue));
+            paramsOutput.add(getLink(cellValue));
         }
-        return jsonObject;
+        list.addAll(params);
+        list.addAll(paramsOutput);
+        list.add(Excel.getCellValue(row.get(COL_IDX_FLOW_CONTROLS)));
+        list.add(Excel.getCellValue(row.get(COL_IDX_RESULT)));
+        list.add(Excel.getCellValue(row.get(COL_IDX_REASON)));
+        list.add(row.get(0).getRowIndex() + 1);
+        list.add(Excel.getCellValue(row.get(COL_IDX_ELAPSED_MS)));
+        return list;
     }
 
-    private static JSONObject addStepLogDetails(JSONObject steps, XSSFRow row) {
-        XSSFCell cell = row.getCell(COL_IDX_CAPTURE_SCREEN);
-        String screenCapture = Excel.getCellValue(cell);
-        String linkDescription = Excel.getCellValue(row.getCell(COL_IDX_PARAMS_START));
-        if (StringUtils.isBlank(screenCapture)) {
-            JSONObject jsonObject = new JSONObject();
-            JSONArray logs = steps.has("logs") ? steps.getJSONArray("logs") : new JSONArray();
-            jsonObject.put("logInfo", linkDescription);
-            logs.put(jsonObject);
-            steps.put("logs", logs);
+    private boolean addStepMeta(List<XSSFCell> nextRow, List<List<Object>> stepLinks, List<List<Object>> logs) {
+        if (!isContainLogs(nextRow)) { return true; }
+
+        // check if screenshot column has a link
+        if (StringUtils.isNotBlank(Excel.getCellValue(nextRow.get(COL_IDX_CAPTURE_SCREEN)))) {
+            stepLinks.add(addStepLogDetails(nextRow, true));
         } else {
-            JSONArray stepLinks = steps.has("stepLinks") ? steps.getJSONArray("stepLinks") : new JSONArray();
-            JSONObject jsonObject = new JSONObject();
+            logs.add(addStepLogDetails(nextRow, false));
+        }
+        return false;
+    }
+
+    private static List<Object> addStepLogDetails(List<XSSFCell> row, boolean isScreenshot) {
+        XSSFCell cell = row.get(COL_IDX_CAPTURE_SCREEN);
+        String screenCapture = Excel.getCellValue(cell);
+        String linkDescription = Excel.getCellValue(row.get(COL_IDX_PARAMS_START));
+        List<Object> list = new ArrayList<>();
+        if (!isScreenshot) {
+            list.add(linkDescription);
+        } else {
             if (StringUtils.startsWith(screenCapture, "HYPERLINK")) {
-                jsonObject.put("linkLabel", getLinkLabel(screenCapture));
-                jsonObject.put("linkDescription", linkDescription);
-                jsonObject.put("linkUrl", getLink(screenCapture));
-                stepLinks.put(jsonObject);
-                steps.put("stepLinks", stepLinks);
+                list.add(getLinkLabel(screenCapture));
+                list.add(linkDescription);
+                list.add(getLink(screenCapture));
             }
         }
-        return steps;
+        return list;
     }
 
-    private static String getLink(String text) {
-        if (StringUtils.isBlank(text)) { return text; }
-        String prefix = "HYPERLINK(IF(ISERROR(FIND(\"dos\",INFO(\"system\"))),";
-        if (StringUtils.startsWith(text, prefix)) {
-            String s = StringUtils.substringAfter(text, prefix);
-            String urls = StringUtils.substringBefore(s, ")");
-            return StringUtils.substringAfterLast(StringUtils.substringBeforeLast(urls, "\""), "\"");
-        } else if (StringUtils.containsAny(text, "http://", "https://")) {
-            return StringUtils.substringBefore(StringUtils.substringAfter(text, "\""), "\"");
-        }
-        return text;
-    }
-
-    private static String getLinkLabel(String text) {
-        if (StringUtils.isBlank(text)) { return text; }
-        return StringUtils.substringAfterLast(StringUtils.substringBeforeLast(text, "\""), "\"");
-    }
-
-    /*private static boolean isContainLogs(List<XSSFCell> row) {
-        return StringUtils.isAllBlank(Excel.getCellValue(row.get(COL_IDX_TARGET)),
-                                      Excel.getCellValue(row.get(COL_IDX_COMMAND))) &&
-               StringUtils.isNotBlank(Excel.getCellValue(row.get(COL_IDX_PARAMS_START)));
-    }*/
     private static boolean isContainLogs(XSSFRow row) {
         return StringUtils.isAllBlank(Excel.getCellValue(row.getCell(COL_IDX_TARGET)),
                                       Excel.getCellValue(row.getCell(COL_IDX_COMMAND))) &&
                StringUtils.isNotBlank(Excel.getCellValue(row.getCell(COL_IDX_PARAMS_START)));
-    }
-
-    private static boolean isEmptyRow(List<XSSFCell> row) {
-        return StringUtils.isAllBlank(Excel.getCellValue(row.get(COL_IDX_TARGET)),
-                                      Excel.getCellValue(row.get(COL_IDX_COMMAND)),
-                                      Excel.getCellValue(row.get(COL_IDX_PARAMS_START)),
-                                      Excel.getCellValue(row.get(COL_IDX_CAPTURE_SCREEN)));
     }
 
     private void insertExecutionData(String scopeId, JSONObject jsonData, String scopeLevel) {
@@ -508,7 +519,7 @@ public class ProcessRecordService {
                                                                           scriptObject.getString("executionLevel")}));
     }
 
-    private void insertTestData(String iterationId, Excel.Worksheet worksheet) {
+    private void insertTestData(String iterationId, Worksheet worksheet) {
         int lastDataRow = worksheet.findLastDataRow(ADDR_FIRST_DATA_COL);
         for (int index = 0; index < lastDataRow; index++) {
             XSSFRow row = worksheet.getSheet().getRow(index);
@@ -519,55 +530,76 @@ public class ProcessRecordService {
         }
     }
 
-    private void insertStepDetails(String activityId, JSONObject jsonObject,
-                                   String scenario, String activity) {
-        JSONArray steps = jsonObject.getJSONObject(scenario.replace("\\n", "\n")).getJSONArray(activity.replace("\\n",
-                                                                                                                "\n"));
+    private void insertStepDetails(String activityId, Map<Activity, List<StepData>> scenarioData,
+                                   String activity, int activitySeq) {
+        Activity activity1 = new Activity(StringUtils.replace(activity, "\\n", "\n"), activitySeq);
+        List<StepData> steps = scenarioData.get(activity1);
+
+        if (steps == null) {
+            System.out.println("Steps are null  for activity" + activity + " and " + activitySeq);
+            return;
+        }
         steps.forEach(step -> {
-            if (Thread.interrupted()) {
-                LoggerUtils.info("*****Interrupted Thread******" + Thread.currentThread().getName());
-                return;
-            }
-            JSONObject stepObject = (JSONObject) step;
             String stepId = sqLiteManager.get();
-            sqLiteManager.updateData("SQL_INSERT_STEPS",
-                                     new Object[]{
-                                         stepId, activityId, stepObject.getString("description"),
-                                         stepObject.getString("target"), stepObject.getString("command"),
-                                         stepObject.getString("param1"), stepObject.getString("param2"),
-                                         stepObject.getString("param3"), stepObject.getString("param4"),
-                                         stepObject.getString("param5"), stepObject.getString("paramOutput1"),
-                                         stepObject.getString("paramOutput2"), stepObject.getString("paramOutput3"),
-                                         stepObject.getString("paramOutput4"), stepObject.getString("paramOutput5"),
-                                         stepObject.getString("flowControl"), stepObject.getString("result"),
-                                         stepObject.getString("reason"), stepObject.getInt("rowNo"),
-                                         stepObject.getString("elapsedTime")});
-
-            if (stepObject.has("stepLinks")) { insertStepLinks(stepObject, stepId); }
-            if (stepObject.has("logs")) { insertLogs(stepObject, stepId); }
+            List<Object> stepParams = step.getStepParams();
+            stepParams.add(0, stepId);
+            stepParams.add(1, activityId);
+            sqLiteManager.updateData("SQL_INSERT_STEPS", stepParams.toArray());
+            insertStepLinks(step, stepId);
+            insertLogs(step, stepId);
         });
     }
 
-    private void insertStepLinks(JSONObject stepObject, String stepId) {
-        JSONArray stepLinks = stepObject.getJSONArray("stepLinks");
-        stepLinks.forEach(stepLink1 -> {
-            JSONObject stepLink = (JSONObject) stepLink1;
-            sqLiteManager.updateData("SQL_INSERT_STEP_LINKS",
-                                     new Object[]{
-                                         sqLiteManager.get(), stepId, stepLink.getString("linkLabel"),
-                                         stepLink.getString("linkDescription"), stepLink.getString("linkUrl")
-                                     });
+    private void insertStepLinks(StepData steps, String stepId) {
+        List<List<Object>> stepLinkParams = steps.getStepLinkParams();
+        if (stepLinkParams == null || stepLinkParams.size() == 0) { return; }
+        stepLinkParams.forEach(list -> {
+            if (list.size() == 0) { return; }
+            list.add(0, sqLiteManager.get());
+            list.add(1, stepId);
+            sqLiteManager.updateData("SQL_INSERT_STEP_LINKS", list.toArray());
         });
     }
 
-    private void insertLogs(JSONObject stepObject, String stepId) {
-        JSONArray logs = stepObject.getJSONArray("logs");
-        logs.forEach(log1 -> {
-            JSONObject log = (JSONObject) log1;
-            sqLiteManager.updateData("SQL_INSERT_LOGS",
-                                     new Object[]{sqLiteManager.get(), stepId, log.getString("logInfo")});
+    private void insertLogs(StepData steps, String stepId) {
+        List<List<Object>> logsParams = steps.getLogsParams();
+        if (logsParams == null || logsParams.size() == 0) { return; }
+        logsParams.forEach(list -> {
+            if (list.size() == 0) { return; }
+            list.add(0, sqLiteManager.get());
+            list.add(1, stepId);
+            sqLiteManager.updateData("SQL_INSERT_LOGS", list.toArray());
         });
     }
 
+    private static String getLink(String text) {
+        if (StringUtils.isBlank(text)) { return text; }
+        String prefix = "HYPERLINK(IF(ISERROR(FIND(\"dos\",INFO(\"system\"))),";
+        if (StringUtils.startsWith(text, prefix)) {
+            String s = StringUtils.substringAfter(text, prefix);
+            String urls = StringUtils.substringBefore(s, ")");
+            return StringUtils.substringAfterLast(StringUtils.substringBeforeLast(urls, "\""), "\"");
+        } else if (StringUtils.containsAny(text, "http://", "https://")) {
+            return StringUtils.substringBefore(StringUtils.substringAfter(text, "\""), "\"");
+        }
+        return text;
+    }
+
+    private static String getLinkLabel(String text) {
+        if (StringUtils.isBlank(text)) { return text; }
+        return StringUtils.substringAfterLast(StringUtils.substringBeforeLast(text, "\""), "\"");
+    }
+
+    private static boolean isContainLogs(List<XSSFCell> row) {
+        return StringUtils.isAllBlank(Excel.getCellValue(row.get(COL_IDX_TARGET)),
+                                      Excel.getCellValue(row.get(COL_IDX_COMMAND))) &&
+               StringUtils.isNotBlank(Excel.getCellValue(row.get(COL_IDX_PARAMS_START)));
+    }
+
+    private static boolean isEmptyRow(List<XSSFCell> row) {
+        return StringUtils.isAllBlank(Excel.getCellValue(row.get(COL_IDX_TARGET)),
+                                      Excel.getCellValue(row.get(COL_IDX_COMMAND)),
+                                      Excel.getCellValue(row.get(COL_IDX_PARAMS_START)),
+                                      Excel.getCellValue(row.get(COL_IDX_CAPTURE_SCREEN)));
+    }
 }
-
