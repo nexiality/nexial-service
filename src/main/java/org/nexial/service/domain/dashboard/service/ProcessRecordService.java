@@ -28,7 +28,8 @@ import org.nexial.service.domain.dashboard.IFileStorage;
 import org.nexial.service.domain.dashboard.scheduler.Activity;
 import org.nexial.service.domain.dashboard.scheduler.Activity.StepData;
 import org.nexial.service.domain.dbconfig.SQLiteManager;
-import org.nexial.service.domain.utils.LoggerUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -51,6 +52,7 @@ public class ProcessRecordService {
     private final SQLiteManager sqLiteManager;
     private final ApplicationProperties properties;
     private final BeanFactory factory;
+    private static final Logger logger = LoggerFactory.getLogger(ProcessRecordService.class);
 
     protected ProcessRecordService(SQLiteManager sqLiteManager,
                                    ApplicationProperties properties, BeanFactory factory) {
@@ -79,8 +81,8 @@ public class ProcessRecordService {
             if (!newRunIdList.isEmpty()) { processExecutionDetailInfo(newRunIdList, projectName); }
             if (!Thread.interrupted()) { ProcessSummaryOutput(projectName, prefix); }
         } catch (Exception e) {
-            System.out.println("The generating summary process for project='" + projectName +
-                               " and prefix='" + prefix + "' has been timed out");
+            logger.error("The generating summary process for project='" + projectName +
+                         " and prefix='" + prefix + "' has been timed out");
         }
         return CompletableFuture.completedFuture(true);
     }
@@ -95,9 +97,9 @@ public class ProcessRecordService {
                                                                                            prefix});
         executionList.sort(Comparator.comparing(row -> StringUtils.substringAfter(row.get("name").toString(), ".")));
         executionList = executionList.subList(0, Math.min(executionList.size(), 90));
-        LoggerUtils.info("/----------------------------------------------------------------\\");
-        LoggerUtils.info(projectName + " Size is " + executionList.size());
-        LoggerUtils.info("\\----------------------------------------------------------------/");
+        logger.info("/----------------------------------------------------------------\\");
+        logger.info(projectName + " Size is " + executionList.size());
+        logger.info("\\----------------------------------------------------------------/");
 
         for (Map<String, Object> exeObjectMap : executionList) {
             JsonObject execution = new JsonObject();
@@ -161,7 +163,7 @@ public class ProcessRecordService {
         factory.getBean(properties.getStorageLocation(), IFileStorage.class).uploadSummary(new File(path),
                                                                                            projectName + prefix);
         String dateNow = new SimpleDateFormat(DATE_TIME_FORMAT).format(new Date());
-        LoggerUtils.info("+++" + projectName + "upladed on server");
+        logger.info("+++" + projectName + "upladed on server");
         sqLiteManager.updateData("SQL_UPDATE_SCHEDULE_INFO_STATUS_COMPLETED",
                                  new Object[]{COMPLETED, dateNow, projectName,
                                               prefix, INPROGRESS});
@@ -191,7 +193,7 @@ public class ProcessRecordService {
         // To make sure all records  status should be changed before another schedule call
         for (Map<String, Object> row : runIdList) {
             if (Thread.interrupted()) {
-                LoggerUtils.info("*****Interrupted Thread******" + Thread.currentThread().getName());
+                logger.info("*****Interrupted Thread******" + Thread.currentThread().getName());
                 return;
             }
             String runId = (String) row.get("RunId");
@@ -221,7 +223,7 @@ public class ProcessRecordService {
     }
 
     private void processJsonData(String content, String projectName) {
-        LoggerUtils.info("--------" + projectName + "----------" + Thread.currentThread().getName());
+        logger.info("--------" + projectName + "----------" + Thread.currentThread().getName());
         JSONObject execution = JsonUtils.toJSONObject(content);
         String executionId = sqLiteManager.get();
         String name = execution.getString("name");
@@ -421,14 +423,12 @@ public class ProcessRecordService {
             });
             excel.close();
             watch.stop();
-            System.out.println("/----------------------------------------------------------------\\");
-            System.out
-                .println("Time taken to complete parse excel " + /*row.get("ProjectName") + "/" + row.get("Prefix")*/
-                         " is " + watch.getTime());
-            System.out.println("\\----------------------------------------------------------------/");
+            logger.info("/----------------------------------------------------------------\\");
+            logger.info("Time taken to complete parse excel is " + watch.getTime());
+            logger.info("\\----------------------------------------------------------------/");
 
         } catch (Exception e) {
-            System.out.println(e.getMessage());
+            logger.error(e.getMessage());
         } finally {
             return scenarios;
         }
@@ -537,7 +537,7 @@ public class ProcessRecordService {
         List<StepData> steps = scenarioData.get(activity1);
 
         if (steps == null) {
-            System.out.println("Steps are null  for activity" + activity + " and " + activitySeq);
+            logger.info("Steps are null  for activity" + activity + " and " + activitySeq);
             return;
         }
         steps.forEach(step -> {
