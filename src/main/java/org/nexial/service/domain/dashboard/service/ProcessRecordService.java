@@ -63,23 +63,24 @@ public class ProcessRecordService {
     @Async("threadPoolTaskExecutor")
     public CompletableFuture<Boolean> generateSummary(String projectName, String prefix) {
         try {
-            sqLiteManager.updateData("SQL_INSERT_WORKERINFO",
+            sqLiteManager.updateData("SQL_INSERT_WORKER_INFO",
                                      new Object[]{sqLiteManager.get(), projectName, prefix,
                                                   Thread.currentThread().getName()});
-            List<Map<String, Object>> runIdList = sqLiteManager.selectForList("SQL_SELECT_RUNID_SCHEDULEINFO",
+            List<Map<String, Object>> runIdList = sqLiteManager.selectForList("SQL_SELECT_RUNID_SCHEDULE_INFO",
                                                                               new Object[]{projectName,
                                                                                            prefix,
                                                                                            RECEIVED});
 
             processExecutionDetailInfo(runIdList, projectName);
-            List<Map<String, Object>> newRunIdList = sqLiteManager.selectForList("SQL_SELECT_RUNID_SCHEDULEINFO",
+            List<Map<String, Object>> newRunIdList = sqLiteManager.selectForList("SQL_SELECT_RUNID_SCHEDULE_INFO",
                                                                                  new Object[]{projectName,
                                                                                               prefix,
                                                                                               RECEIVED});
             if (!newRunIdList.isEmpty()) { processExecutionDetailInfo(newRunIdList, projectName); }
             if (!Thread.interrupted()) { ProcessSummaryOutput(projectName, prefix); }
         } catch (Exception e) {
-            e.printStackTrace();
+            System.out.println("The generating summary process for project='" + projectName +
+                               " and prefix='" + prefix + "' has been timed out");
         }
         return CompletableFuture.completedFuture(true);
     }
@@ -129,7 +130,7 @@ public class ProcessRecordService {
                 script.add("nestedExecutions", nestedIteration);
                 nestedScripts.add(script);
             }
-            List<Map<String, Object>> executionMetaData = sqLiteManager.selectForList("SQL_SELECT_EXECUTIONMETA",
+            List<Map<String, Object>> executionMetaData = sqLiteManager.selectForList("SQL_SELECT_EXECUTION_META",
                                                                                       new Object[]{exeObjectMap.get("Id"),
                                                                                                    "EXECUTION"});
             JsonObject referenceData = new JsonObject();
@@ -161,7 +162,7 @@ public class ProcessRecordService {
                                                                                            projectName + prefix);
         String dateNow = new SimpleDateFormat(DATE_TIME_FORMAT).format(new Date());
         LoggerUtils.info("+++" + projectName + "upladed on server");
-        sqLiteManager.updateData("SQL_UPDATE_SCHEDULEINFO_STATUS_COMPLETED",
+        sqLiteManager.updateData("SQL_UPDATE_SCHEDULE_INFO_STATUS_COMPLETED",
                                  new Object[]{COMPLETED, dateNow, projectName,
                                               prefix, INPROGRESS});
 
@@ -174,7 +175,7 @@ public class ProcessRecordService {
     }
 
     private void mapExecutionData(Map<String, Object> exeObjectMap, JsonObject execution, String scopeType) {
-        List<Map<String, Object>> executionDataList = sqLiteManager.selectForList("SQL_SELECT_EXECUTIONDATA",
+        List<Map<String, Object>> executionDataList = sqLiteManager.selectForList("SQL_SELECT_EXECUTION_DATA",
                                                                                   new Object[]{exeObjectMap.get("Id"),
                                                                                                scopeType});
         for (Map<String, Object> exeDataObjectMap : executionDataList) {
@@ -194,12 +195,12 @@ public class ProcessRecordService {
                 return;
             }
             String runId = (String) row.get("RunId");
-            String outputPath = (String) sqLiteManager.selectForObject("SQL_SELECT_OUTPUTPATH_SCHEDULEINFO",
+            String outputPath = (String) sqLiteManager.selectForObject("SQL_SELECT_OUTPUT_PATH_SCHEDULE_INFO",
                                                                        new Object[]{runId, RECEIVED},
                                                                        String.class);
             String processingDateNow = new SimpleDateFormat(DATE_TIME_FORMAT).format(new Date());
             Object[] processingParams = {INPROGRESS, processingDateNow, runId};
-            sqLiteManager.updateData("SQL_UPDATE_SCHEDULEINFO_STATUS_STAGE", processingParams);
+            sqLiteManager.updateData("SQL_UPDATE_SCHEDULE_INFO_STATUS_STAGE", processingParams);
             getExecutionDetailData(outputPath, projectName);
         }
     }

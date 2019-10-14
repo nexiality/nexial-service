@@ -95,7 +95,7 @@ public class FileStorageService {
                           dateNow,
                           dateNow,
                           StringUtils.replace(outputPath, "\\", "/")};
-        sqLiteManager.updateData("SQL_INSERT_SCHEDULEINFO", param);
+        sqLiteManager.updateData("SQL_INSERT_SCHEDULE_INFO", param);
     }
 
 }

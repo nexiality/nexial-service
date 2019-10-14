@@ -36,4 +36,6 @@ public final class Constants {
     public static final String NESTED_EXECUTIONS = "nestedExecutions";
     public static final String RESULTS = "results";
 
+    public static final Long TIME_OUT = 30000L;
+
 }
