@@ -11,7 +11,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.nexial.commons.utils.DateUtility;
 import org.nexial.service.domain.dashboard.service.ProcessRecordService;
 import org.nexial.service.domain.dbconfig.SQLiteManager;
-import org.nexial.service.domain.utils.LoggerUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
@@ -26,6 +27,7 @@ public class ExecutionSummaryScheduler {
     private final ProcessRecordService processRecordService;
     private final SQLiteManager sqLiteManager;
     private final ThreadPoolTaskExecutor threadPoolTaskExecutor;
+    private static final Logger logger = LoggerFactory.getLogger(ExecutionSummaryScheduler.class);
 
     public ExecutionSummaryScheduler(ProcessRecordService processRecordService,
                                      SQLiteManager sqLiteManager,
@@ -38,7 +40,7 @@ public class ExecutionSummaryScheduler {
     @Scheduled(fixedRate = 6000)
     private void summaryScheduler() {
         //Todo  use Spring functionality and configure through xml
-        LoggerUtils.info("Summary Scheduler called " + DateUtility.format(System.currentTimeMillis()));
+        logger.info("Summary Scheduler called " + DateUtility.format(System.currentTimeMillis()));
         List<Map<String, Object>> projectList = sqLiteManager.selectForList("SQL_SELECT_SCHEDULE_INFO",
                                                                             new Object[]{RECEIVED});
         Map<ProjectMeta, CompletableFuture<Boolean>> completableFutures = new ConcurrentHashMap<>();
@@ -52,7 +54,7 @@ public class ExecutionSummaryScheduler {
                 String prefix = (String) row.get("Prefix");
                 CompletableFuture<Boolean> completableFuture = processRecordService.generateSummary(projectName,
                                                                                                     prefix);
-                LoggerUtils.info("--------" + projectName + "-----Started at ----" + new Date().getTime());
+                logger.info("--------" + projectName + "-----Started at ----" + new Date().getTime());
                 completableFutures.put(new ProjectMeta(projectName, prefix, new Date().getTime()), completableFuture);
             }
         }
