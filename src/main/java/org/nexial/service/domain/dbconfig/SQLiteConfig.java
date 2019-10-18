@@ -8,33 +8,21 @@ import javax.sql.DataSource;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 public class SQLiteConfig {
-
-    List<String> sqlCreateStatements;
-    private DataSource dataSource;
-
     @Resource
     private JdbcTemplate jdbcTemplate;
+    private DataSource dataSource;
 
     public DataSource getDataSource() { return dataSource; }
 
-    public void setDataSource(DataSource dataSource) {
-        this.dataSource = dataSource;
-    }
-
-    public void setSqlCreateStatements(List<String> sqlCreateStatements) {
-        this.sqlCreateStatements = sqlCreateStatements;
-    }
-
-    void execute(String sql) { jdbcTemplate.update(sql); }
+    public void setDataSource(DataSource dataSource) { this.dataSource = dataSource; }
 
     List<Map<String, Object>> queryForList(String sql, Object[] params) {
         return jdbcTemplate.queryForList(sql, params);
     }
 
-    Object queryForObject(String sql, Object[] params, Class neededClass) {
-        return jdbcTemplate.queryForObject(sql, params, neededClass);
+    Object queryForObject(String sql, Object[] params, Class requiredClass) {
+        return jdbcTemplate.queryForObject(sql, params, requiredClass);
     }
 
-    void execute(String sqlStatement, Object[] params) { jdbcTemplate.update(sqlStatement, params); }
-
+    void execute(String sql, Object... params) { jdbcTemplate.update(sql, params); }
 }

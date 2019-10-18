@@ -37,6 +37,7 @@ public class LocalFileSystem implements IFileStorage {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return "http://172.20.161.54:8099/download/" + url;
+        // need to change to ip address
+        return "http://localhost:8099/download/" + url;
     }
 }

@@ -1,5 +1,7 @@
 package org.nexial.service.domain.utils;
 
+import java.text.SimpleDateFormat;
+
 public final class Constants {
     public static final String SUMMARY_OUTPUT_FILE = "/summary_output.json";
     public static final String DATE_TIME_FORMAT = "MM/dd/YYYY hh:mm:ss";
@@ -36,6 +38,8 @@ public final class Constants {
     public static final String NESTED_EXECUTIONS = "nestedExecutions";
     public static final String RESULTS = "results";
 
-    public static final Long TIME_OUT = 30000L;
+    public static final Long TIME_OUT = 300000L;
+
+    public static final SimpleDateFormat SIMPLE_DATE_FORMAT = new SimpleDateFormat(DATE_TIME_FORMAT);
 
 }
