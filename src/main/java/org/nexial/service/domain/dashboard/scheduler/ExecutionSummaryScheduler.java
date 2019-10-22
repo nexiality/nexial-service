@@ -11,6 +11,7 @@ import org.nexial.commons.utils.DateUtility;
 import org.nexial.service.domain.dashboard.service.ProcessRecordService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.BeanFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -18,25 +19,27 @@ import static org.nexial.service.domain.utils.Constants.TIME_OUT;
 
 @Component
 public class ExecutionSummaryScheduler {
-    private final ProcessRecordService processRecordService;
+    private final BeanFactory beanFactory;
     private static final Logger logger = LoggerFactory.getLogger(ExecutionSummaryScheduler.class);
 
-    public ExecutionSummaryScheduler(ProcessRecordService processRecordService) {
-        this.processRecordService = processRecordService;
+    public ExecutionSummaryScheduler(BeanFactory beanFactory) {
+        this.beanFactory = beanFactory;
     }
 
-    @Scheduled(fixedRate = 400000)
+    @Scheduled(fixedRate = 1000000)
     private void summaryScheduler() {
         //Todo  use Spring functionality and configure through xml
         logger.info("Summary Scheduler called " + DateUtility.format(System.currentTimeMillis()));
-        List<Map<String, Object>> projectList = processRecordService.getReceivedProjects();
-        Map<ProjectMeta, CompletableFuture<Boolean>> completableFutures = new ConcurrentHashMap<>();
+        List<Map<String, Object>> projectList = beanFactory.getBean(ProcessRecordService.class).getReceivedProjects();
+        Map<ProcessRecordService, CompletableFuture<Boolean>> completableFutures = new ConcurrentHashMap<>();
         for (Map<String, Object> row : projectList) {
-            //check whether there is a worker thread is present or not if yes dont add thoser project/prefix
+            //check whether there is a worker thread is present or not if yes dont add those project/prefix
+            ProcessRecordService processRecordService = beanFactory.getBean(ProcessRecordService.class);
             String projectName = (String) row.get("ProjectName");
             String prefix = (String) row.get("Prefix");
             processRecordService.setProject(projectName);
             processRecordService.setPrefix(prefix);
+            processRecordService.setStartTime(System.currentTimeMillis());
             int count = processRecordService.getWorkerCount();
 
             if (count == 0) {
@@ -44,24 +47,21 @@ public class ExecutionSummaryScheduler {
 
                 logger.info("--------" + projectName + "-----Started at ----" + new Date().getTime());
                 // todo need to think new logic may be ProcessRecordService as key
-                completableFutures.put(new ProjectMeta(projectName, prefix, new Date().getTime()), completableFuture);
+                completableFutures.put(processRecordService, completableFuture);
             }
         }
         while (completableFutures.size() > 0) {
-            for (Entry<ProjectMeta, CompletableFuture<Boolean>> entry : completableFutures.entrySet()) {
-                ProjectMeta projectMeta = entry.getKey();
+            for (Entry<ProcessRecordService, CompletableFuture<Boolean>> entry : completableFutures.entrySet()) {
+                ProcessRecordService processRecord = entry.getKey();
                 CompletableFuture<Boolean> completableFuture = entry.getValue();
-                if (projectMeta != null && completableFuture != null) {
-                    String projectName = projectMeta.getProject();
-                    String prefix = projectMeta.getPrefix();
-                    Long startTime = projectMeta.getStartTime();
+                if (processRecord != null && completableFuture != null) {
 
-                    if ((new Date().getTime() - startTime) > TIME_OUT) {
+                    if ((new Date().getTime() - processRecord.getStartTime()) > TIME_OUT) {
                         if (!completableFuture.isDone() || completableFuture.isCancelled()) {
-                            processRecordService.interruptThread(projectName, prefix);
+                            processRecord.interruptThread();
                             completableFuture.cancel(true);
                         }
-                        completableFutures.remove(projectMeta);
+                        completableFutures.remove(processRecord);
                     }
                 }
             }

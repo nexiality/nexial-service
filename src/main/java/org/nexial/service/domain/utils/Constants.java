@@ -3,9 +3,10 @@ package org.nexial.service.domain.utils;
 import java.text.SimpleDateFormat;
 
 public final class Constants {
-    public static final String SUMMARY_OUTPUT_FILE = "/summary_output.json";
+    public static final String SUMMARY_OUTPUT_FILE = "summary_output.json";
     public static final String DATE_TIME_FORMAT = "MM/dd/YYYY hh:mm:ss";
-    ;
+    public static final String PATH_SEPARATOR = "/";
+
     public static final String TIMESTAMP_REGEX = "^.*(\\d{4})(\\d{2})(\\d{2})_(\\d{2})(\\d{2})(\\d{2})$";
     // external configuration
     public static final String STORAGE_LOCATION = "config.storage.location";
@@ -17,7 +18,6 @@ public final class Constants {
     public static final String CLOUD_AWS_ACCESSKEY = "config.cloud.accessKey";
     public static final String CLOUD_AWS_REGION = "config.cloud.region";
     public static final String EXECUTOR_WORKER_THREAD_TIMEOUT = "config.executor.thread.timeout.seconds";
-    public static final String CLOUD_AWS_SEPARATOR = "/";
     public static final String LOCAL_ARTIFACTS_PATH = "config.local.artifactsPath";
     public static final String LOCAL_EXECUTION_SUMMARY_PATH = "config.local.executionSummaryPath";
 
@@ -38,7 +38,7 @@ public final class Constants {
     public static final String NESTED_EXECUTIONS = "nestedExecutions";
     public static final String RESULTS = "results";
 
-    public static final Long TIME_OUT = 300000L;
+    public static final Long TIME_OUT = 600000L;
 
     public static final SimpleDateFormat SIMPLE_DATE_FORMAT = new SimpleDateFormat(DATE_TIME_FORMAT);
 

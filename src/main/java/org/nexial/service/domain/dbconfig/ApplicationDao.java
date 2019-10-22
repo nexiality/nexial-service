@@ -1,6 +1,5 @@
 package org.nexial.service.domain.dbconfig;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Date;
 import java.util.List;
@@ -19,17 +18,19 @@ import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.utils.JSONPath;
 import org.nexial.service.domain.dashboard.scheduler.Activity.StepData;
 import org.nexial.service.domain.utils.Constants.Status;
-import org.springframework.stereotype.Component;
+import org.nexial.service.domain.utils.UtilityHelper;
+import org.springframework.stereotype.Repository;
 
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.nexial.core.NexialConst.Project.NEXIAL_EXECUTION_TYPE_PLAN;
 import static org.nexial.core.NexialConst.Project.NEXIAL_EXECUTION_TYPE_SCRIPT;
 import static org.nexial.core.excel.ExcelConfig.ADDR_FIRST_DATA_COL;
+import static org.nexial.service.domain.utils.Constants.PATH_SEPARATOR;
 import static org.nexial.service.domain.utils.Constants.SIMPLE_DATE_FORMAT;
 import static org.nexial.service.domain.utils.Constants.Status.INPROGRESS;
 import static org.nexial.service.domain.utils.Constants.Status.RECEIVED;
 
-@Component
+@Repository
 public class ApplicationDao {
     private static final int ID_LENGTH = 16;
     private String project;
@@ -59,13 +60,17 @@ public class ApplicationDao {
     public String insertExecutionInfo(JSONObject execution) {
         String executionId = generateId();
         String name = execution.getString("name");
+        String executionLog = UtilityHelper.getPath(JSONPath.find(execution, "nestedExecutions[0].executionLog"),
+                                                    false);
+        String location = StringUtils.substringBefore(executionLog, project) + project + PATH_SEPARATOR;
+        executionLog = StringUtils.substringAfter(executionLog, location);
+        String logFile = "output/" + name + "/logs/nexial-" + name + ".log";
         //Todo execution log file location check need to create manually or get from  script
         // String logFile = JSONPath.find(jsonData,"nestedExecutions[0].executionLog");
-        String logFile = "logs" + File.separator + "nexial-" + name + ".log";
         String executionType = (JSONPath.find(execution, "nestedExecutions[0].planName") == null) ?
                                NEXIAL_EXECUTION_TYPE_SCRIPT : NEXIAL_EXECUTION_TYPE_PLAN;
-        sqLiteConfig.execute(getSqlStatement("SQL_INSERT_EXECUTION"), executionId, name, EMPTY,
-                             logFile, EMPTY, executionType, prefix, project);
+        sqLiteConfig.execute(getSqlStatement("SQL_INSERT_EXECUTION"), executionId, name,
+                             location, logFile, executionLog, executionType, prefix, project);
 
         insertExecutionData(execution, executionId);
         insertExecutionMetaData(execution, executionId);
@@ -76,15 +81,19 @@ public class ApplicationDao {
 
     public String insertPlanInfo(String executionId, JSONObject scriptObject, int planSequence, String planName1) {
         String planId = generateId();
+        String planFile = UtilityHelper.getPath(scriptObject.getString("planFile"), false);
         sqLiteConfig.execute(getSqlStatement("SQL_INSERT_PLAN"), planId, executionId, planName1, planSequence,
-                             scriptObject.getString("planFile"));
+                             StringUtils.substringAfter(planFile, project + "/"));
         return planId;
     }
 
     public String insertScriptInfo(String executionId, String planId, int sequence, JSONObject scriptObject) {
         String scriptId = generateId();
-        sqLiteConfig.execute(getSqlStatement("SQL_INSERT_SCRIPT"), scriptId, scriptObject.getString("name"),
-                             sequence, planId, executionId, scriptObject.getString("scriptFile"));
+        String scriptFile = UtilityHelper.getPath(scriptObject.getString("scriptFile"), false);
+        sqLiteConfig.execute(getSqlStatement("SQL_INSERT_SCRIPT"),
+                             scriptId, scriptObject.getString("name"),
+                             sequence, planId, executionId,
+                             StringUtils.substringAfter(scriptFile, project + "/"));
         insertExecutionData(scriptObject, scriptId);
         insertExecutionMetaData(scriptObject, scriptId);
         return scriptId;
@@ -217,7 +226,7 @@ public class ApplicationDao {
             prefix = "";
         }
         Object[] param = {generateId(), projectName, prefix, runId, RECEIVED, dateNow,
-                          dateNow, StringUtils.replace(outputPath, "\\", "/")};
+                          dateNow, UtilityHelper.getPath(outputPath, false)};
         sqLiteConfig.execute("SQL_INSERT_SCHEDULE_INFO", param);
     }
 
@@ -243,6 +252,16 @@ public class ApplicationDao {
         return (String) sqLiteConfig.queryForObject(getSqlStatement("SQL_SELECT_WORKER_INFO"),
                                                     new Object[]{projectName, prefix},
                                                     String.class);
+    }
+
+    public String getWorkerInterrupt(String projectName, String prefix) {
+        return (String) sqLiteConfig.queryForObject(getSqlStatement("SQL_SELECT_WORKER_INTERRUPT"),
+                                                    new Object[]{projectName, prefix},
+                                                    String.class);
+    }
+
+    public void updateWorkerInterrupt(String projectName, String prefix) {
+        sqLiteConfig.execute(getSqlStatement("SQL_UPDATE_WORKER_INFO"), new Object[]{projectName, prefix});
     }
 
     public List<Map<String, Object>> getExecutionSummary() {

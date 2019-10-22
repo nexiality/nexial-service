@@ -2,11 +2,7 @@ package org.nexial.service.domain.dashboard.service;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 import org.apache.commons.io.FileUtils;
@@ -27,9 +23,11 @@ import org.nexial.service.domain.dashboard.IFileStorage;
 import org.nexial.service.domain.dashboard.scheduler.Activity;
 import org.nexial.service.domain.dashboard.scheduler.Activity.StepData;
 import org.nexial.service.domain.dbconfig.ApplicationDao;
+import org.nexial.service.domain.utils.UtilityHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.BeanFactory;
+import org.springframework.context.annotation.Scope;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -46,46 +44,61 @@ import static org.nexial.service.domain.utils.Constants.Status.COMPLETED;
 import static org.nexial.service.domain.utils.Constants.Status.FAILED;
 
 @Service
+@Scope("prototype")
 public class ProcessRecordService {
-    private final ApplicationDao dao;
+    private static final Logger logger = LoggerFactory.getLogger(ProcessRecordService.class);
+
+    private ApplicationDao dao;
     private final ApplicationProperties properties;
     private final BeanFactory factory;
-    private static final Logger logger = LoggerFactory.getLogger(ProcessRecordService.class);
     private String project;
     private String prefix;
+    private Long startTime;
 
-    protected ProcessRecordService(ApplicationDao dao, ApplicationProperties properties, BeanFactory factory) {
+    public ProcessRecordService(ApplicationDao dao, ApplicationProperties properties, BeanFactory factory) {
         this.dao = dao;
         this.properties = properties;
         this.factory = factory;
-
     }
 
     public void setProject(String project) { this.project = project; }
 
     public void setPrefix(String prefix) { this.prefix = prefix; }
 
+    public String getProject() { return project; }
+
+    public String getPrefix() { return prefix; }
+
+    public Long getStartTime() { return startTime; }
+
     public int getWorkerCount() { return dao.getWorkerCount(project, prefix); }
+
+    public void setStartTime(Long startTime) { this.startTime = startTime; }
 
     public List<Map<String, Object>> getReceivedProjects() { return dao.getReceivedProjects(); }
 
-    public void interruptThread(String projectName, String prefix) {
-        String workerId = dao.getWorkerId(projectName, prefix);
+    public void interruptThread() {
+        dao.updateWorkerInterrupt(project, prefix);
+        logger.info("The thread must be interrupted at time= " + SIMPLE_DATE_FORMAT.format(new Date()));
+
+        // Terminate thread instantly;
+        /*String workerId = dao.getWorkerId(projectName, prefix);
 
         Thread.getAllStackTraces().keySet().stream()
-              .filter(t -> t.getName().equals(workerId)).forEach(Thread::interrupt);
+              .filter(t -> t.getName().equals(workerId)).forEach(Thread::interrupt);*/
     }
 
     @Async("threadPoolTaskExecutor")
     public CompletableFuture<Boolean> generateSummary() {
         dao.setProject(project);
         dao.setPrefix(prefix);
+        logger.info("--------" + project + "----------[" + Thread.currentThread().getName() + "]");
         try {
             dao.updateWorkerInfo(Thread.currentThread().getName());
             while (true) {
                 List<Map<String, Object>> runIdList = dao.getRunIds();
                 if (runIdList.isEmpty()) { break; }
-                processExecutionDetailInfo(runIdList);
+                if (processExecutionDetailInfo(runIdList)) { Thread.currentThread().interrupt(); }
             }
 
             ProcessSummaryOutput();
@@ -101,22 +114,27 @@ public class ProcessRecordService {
         return CompletableFuture.completedFuture(true);
     }
 
-    private void processExecutionDetailInfo(List<Map<String, Object>> runIdList) {
+    private boolean processExecutionDetailInfo(List<Map<String, Object>> runIdList) {
         // To make sure all records  status should be changed before another schedule call
+        boolean interrupt = false;
         for (Map<String, Object> row : runIdList) {
-            if (Thread.interrupted()) {
-                logger.info("*****Interrupted Thread******" + Thread.currentThread().getName());
-                return;
-            }
             String runId = (String) row.get("RunId");
             String outputPath = dao.getExecutionOutputPath(runId);
             dao.updateScheduleInfoStatusInProgress(runId);
-            getExecutionDetailData(outputPath);
+            insertExecutionDetails(outputPath);
+            if (StringUtils.equals(dao.getWorkerInterrupt(project, prefix), "true")) {
+                logger.info("This thread for run id " + runId + "is interrupted; Time=" +
+                            SIMPLE_DATE_FORMAT.format(new Date()));
+                interrupt = true;
+                break;
+            }
         }
+        return interrupt;
     }
 
-    private void getExecutionDetailData(String outputPath) {
-        outputPath = StringUtils.replace(outputPath, "\\", "/");
+    private void insertExecutionDetails(String outputPath) {
+        outputPath = UtilityHelper.getPath(outputPath, false);
+
         String content = null;
         //Todo change path store full path
         try {
@@ -131,7 +149,6 @@ public class ProcessRecordService {
     }
 
     private void processJsonData(String content) {
-        logger.info("--------" + project + "----------" + Thread.currentThread().getName());
         JSONObject execution = JsonUtils.toJSONObject(content);
         String executionId = dao.insertExecutionInfo(execution);
 
@@ -161,7 +178,9 @@ public class ProcessRecordService {
             for (int iter = 0; iter < iterations.length(); iter++) {
                 JSONObject iterationObject = iterations.getJSONObject(iter);
                 String testScriptLink = iterationObject.getString("testScriptLink");
-                String iterationId = dao.insertIterationInfo(scriptId, iterationObject, testScriptLink);
+                String iterationId = dao.insertIterationInfo(scriptId,
+                                                             iterationObject,
+                                                             StringUtils.substringAfter(testScriptLink, project + "/"));
 
                 String path = getLocalPath(testScriptLink, execution.getString("name"));
                 boolean isWindows = StringUtils.contains(execution.getString("runHostOs"), "Windows");
@@ -251,8 +270,8 @@ public class ProcessRecordService {
             prefix = "." + prefix;
         }
         String summaryPath = properties.getLocalExecutionSummaryPath();
-        String path = summaryPath + CLOUD_AWS_SEPARATOR + project +
-                      prefix + CLOUD_AWS_SEPARATOR + "summary_output.json";
+        String path = summaryPath + PATH_SEPARATOR + project +
+                      prefix + PATH_SEPARATOR + SUMMARY_OUTPUT_FILE;
         try {
             FileUtil.createNewFile(new File(path), projectOutputJsonObject.toString());
         } catch (Exception e) {
@@ -281,11 +300,10 @@ public class ProcessRecordService {
     }
 
     private String getLocalPath(String testScriptLink, String runId) {
-        String link = StringUtils.replace(testScriptLink, "\\", "/");
-        String path = properties.getLocalArtifactsPath();
-        path = path + CLOUD_AWS_SEPARATOR + project + CLOUD_AWS_SEPARATOR + runId +
-               CLOUD_AWS_SEPARATOR + StringUtils.substringAfterLast(link, CLOUD_AWS_SEPARATOR);
-        return path;
+        String link = UtilityHelper.getPath(testScriptLink, false);
+
+        return properties.getLocalArtifactsPath() + PATH_SEPARATOR + project + PATH_SEPARATOR +
+               runId + PATH_SEPARATOR + StringUtils.substringAfterLast(link, PATH_SEPARATOR);
     }
 
     private Map<String, Map<Activity, List<StepData>>> parseExcel(String iterationId, String path, boolean isWindows) {
@@ -434,12 +452,12 @@ public class ProcessRecordService {
     }
 
     private void insertStepDetails(String activityId, Map<Activity, List<StepData>> scenarioData,
-                                   String activity, int activitySeq) {
-        Activity activity1 = new Activity(StringUtils.replace(activity, "\\n", "\n"), activitySeq);
-        List<StepData> steps = scenarioData.get(activity1);
+                                   String activityName, int activitySeq) {
+        Activity activity = new Activity(StringUtils.replace(activityName, "\\n", "\n"), activitySeq);
+        List<StepData> steps = scenarioData.get(activity);
 
         if (steps == null) {
-            logger.info("Steps are null  for activity" + activity + " and " + activitySeq);
+            logger.info("Steps are null  for activity" + activityName + " and " + activitySeq);
             return;
         }
         dao.insertStepInfo(steps, activityId);
@@ -451,7 +469,10 @@ public class ProcessRecordService {
         String prefix = "HYPERLINK(IF(ISERROR(FIND(\"dos\",INFO(\"system\"))),";
         if (StringUtils.startsWith(text, prefix)) {
             String[] urls = StringUtils.substringsBetween(text, "\"", "\"");
-            String link = !isWindows ? urls[2] : urls[3].replace("\\", "/");
+            String link = isWindows ? UtilityHelper.getPath(urls[3], false) : urls[2];
+            if (StringUtils.contains(link, project + "/")) {
+                link = StringUtils.substringAfter(link, project + "/");
+            }
             return link;
         } else if (StringUtils.containsAny(text, "http://", "https://")) {
             return StringUtils.substringBetween(text, "\"", "\"");

@@ -18,17 +18,13 @@ public class ApplicationProperties extends ReloadApplicationProperties {
 
     public String getRegion() { return environment.getProperty(CLOUD_AWS_REGION); }
 
-    public String getWorkerTimeout() { return environment.getProperty(EXECUTOR_WORKER_THREAD_TIMEOUT); }
-
     public String getLocalArtifactsPath() {
-        return UtilityHelper.getPath(environment.getProperty(LOCAL_ARTIFACTS_PATH));
+        return UtilityHelper.getPath(environment.getProperty(LOCAL_ARTIFACTS_PATH), true);
     }
 
-    public String getStorageLocation() {
-        return environment.getProperty(STORAGE_LOCATION);
-    }
+    public String getStorageLocation() { return environment.getProperty(STORAGE_LOCATION); }
 
     public String getLocalExecutionSummaryPath() {
-        return UtilityHelper.getPath(environment.getProperty(LOCAL_EXECUTION_SUMMARY_PATH));
+        return UtilityHelper.getPath(environment.getProperty(LOCAL_EXECUTION_SUMMARY_PATH), true);
     }
 }

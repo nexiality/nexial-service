@@ -10,12 +10,13 @@ import org.nexial.commons.utils.FileUtil;
 import org.nexial.service.domain.ApplicationProperties;
 import org.nexial.service.domain.dashboard.IFileStorage;
 import org.nexial.service.domain.dbconfig.ApplicationDao;
-import org.nexial.service.domain.utils.Constants;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+
+import static org.nexial.service.domain.utils.Constants.PATH_SEPARATOR;
 
 @Service
 public class FileStorageService {
@@ -35,16 +36,11 @@ public class FileStorageService {
         File fileLocation = null;
         try {
             if (StringUtils.isBlank(folderPath)) {
-                targetLocation = properties.getLocalArtifactsPath() + projectName + Constants.CLOUD_AWS_SEPARATOR +
-                                 runId +
-                                 Constants.CLOUD_AWS_SEPARATOR +
-                                 fileName;
+                targetLocation = properties.getLocalArtifactsPath() + projectName +
+                                 PATH_SEPARATOR + runId + PATH_SEPARATOR + fileName;
             } else {
-                targetLocation = properties.getLocalArtifactsPath() + projectName + Constants.CLOUD_AWS_SEPARATOR +
-                                 runId +
-                                 Constants.CLOUD_AWS_SEPARATOR +
-                                 folderPath + Constants.CLOUD_AWS_SEPARATOR +
-                                 fileName;
+                targetLocation = properties.getLocalArtifactsPath() + projectName + PATH_SEPARATOR +
+                                 runId + PATH_SEPARATOR + folderPath + PATH_SEPARATOR + fileName;
             }
             try {
                 fileLocation = FileUtil.writeBinaryFile(targetLocation,
@@ -59,7 +55,7 @@ public class FileStorageService {
         }
         String url = beanFactory.getBean(properties.getStorageLocation(), IFileStorage.class)
                                 .uploadArtifact(fileLocation, projectName, runId, folderPath);
-        if ("execution-detail.json".equals(fileName)) {
+        if (fileName.equals("execution-detail.json")) {
             dao.insertIntoScheduleInfo(projectName, runId, targetLocation);
         }
         return url;

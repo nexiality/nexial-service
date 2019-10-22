@@ -6,6 +6,7 @@ import java.io.IOException;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.nexial.service.domain.utils.Constants;
+import org.nexial.service.domain.utils.UtilityHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -31,9 +32,9 @@ public class LocalFileSystem implements IFileStorage {
     private String getLocalUrl(File file) {
         String url = null;
         try {
-            url = StringUtils.replace(file.getCanonicalPath(), "\\", Constants.CLOUD_AWS_SEPARATOR);
-            url = StringUtils.substringAfter(url, Constants.CLOUD_AWS_SEPARATOR);
-            url = StringUtils.substringAfter(url, Constants.CLOUD_AWS_SEPARATOR);
+            url = UtilityHelper.getPath(file.getCanonicalPath(), false);
+            url = StringUtils.substringAfter(url, Constants.PATH_SEPARATOR);
+            url = StringUtils.substringAfter(url, Constants.PATH_SEPARATOR);
         } catch (IOException e) {
             e.printStackTrace();
         }

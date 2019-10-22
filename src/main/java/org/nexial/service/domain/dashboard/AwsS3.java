@@ -12,7 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import static org.nexial.service.domain.utils.Constants.CLOUD_AWS_SEPARATOR;
+import static org.nexial.service.domain.utils.Constants.PATH_SEPARATOR;
 
 @Component("aws")
 public class AwsS3 implements IFileStorage {
@@ -29,10 +29,10 @@ public class AwsS3 implements IFileStorage {
     public String uploadArtifact(File file, String projectName, String runId, String folderPath) {
         String artifactPath = properties.getArtifactCloudBase() +
                               projectName +
-                              CLOUD_AWS_SEPARATOR +
+                              PATH_SEPARATOR +
                               runId;
         if (folderPath != null) {
-            artifactPath = artifactPath + CLOUD_AWS_SEPARATOR + folderPath;
+            artifactPath = artifactPath + PATH_SEPARATOR + folderPath;
         }
         return uploadToCloud(file, artifactPath, false);
     }

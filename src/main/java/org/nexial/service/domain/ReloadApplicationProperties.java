@@ -10,6 +10,7 @@ import javax.annotation.PostConstruct;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.nexial.service.domain.utils.UtilityHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.PropertiesPropertySource;
 import org.springframework.core.env.StandardEnvironment;
@@ -29,7 +30,7 @@ public abstract class ReloadApplicationProperties {
     public void init() throws IOException {
 
         assert StringUtils.isNotBlank(environment.getProperty(CONFIGURATION_PATH));
-        filePath = new File(StringUtils.replace(environment.getProperty(CONFIGURATION_PATH), "\\", "/"));
+        filePath = new File(UtilityHelper.getPath(environment.getProperty(CONFIGURATION_PATH), false));
         assert filePath != null;
         assert filePath.exists();
         assert filePath.canRead();
