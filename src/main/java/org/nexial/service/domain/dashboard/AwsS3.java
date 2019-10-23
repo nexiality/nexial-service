@@ -48,7 +48,11 @@ public class AwsS3 implements IFileStorage {
     public void deleteFolders(String path) {
         File file = new File(path);
         if (!file.exists()) { return; }
-        try { FileUtils.cleanDirectory(file.getParentFile()); } catch (IOException e) { logger.error(e.getMessage()); }
+        try {
+            FileUtils.cleanDirectory(file.getParentFile());
+        } catch (IOException e) {
+            logger.error("Unable to delete the folder", e);
+        }
     }
 
     @Nullable
@@ -59,7 +63,7 @@ public class AwsS3 implements IFileStorage {
         try {
             returnUrl = helper.importToS3(file, summaryOutputKey, removeLocal);
         } catch (IOException e) {
-            logger.error(e.getMessage());
+            logger.error("upload to cloud is failed", e);
         }
         return returnUrl;
     }
