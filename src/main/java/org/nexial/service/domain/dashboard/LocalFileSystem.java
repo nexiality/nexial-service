@@ -36,7 +36,7 @@ public class LocalFileSystem implements IFileStorage {
             url = StringUtils.substringAfter(url, Constants.PATH_SEPARATOR);
             url = StringUtils.substringAfter(url, Constants.PATH_SEPARATOR);
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error("Unable to find the file - " + file.getAbsolutePath(), e);
         }
         // need to change to ip address
         return "http://localhost:8099/download/" + url;

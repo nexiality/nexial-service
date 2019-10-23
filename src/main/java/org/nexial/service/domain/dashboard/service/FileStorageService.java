@@ -10,6 +10,8 @@ import org.nexial.commons.utils.FileUtil;
 import org.nexial.service.domain.ApplicationProperties;
 import org.nexial.service.domain.dashboard.IFileStorage;
 import org.nexial.service.domain.dbconfig.ApplicationDao;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
@@ -20,6 +22,7 @@ import static org.nexial.service.domain.utils.Constants.PATH_SEPARATOR;
 
 @Service
 public class FileStorageService {
+    private static final Logger logger = LoggerFactory.getLogger(FileStorageService.class);
     private final ApplicationProperties properties;
     private final BeanFactory beanFactory;
     private final ApplicationDao dao;
@@ -47,11 +50,10 @@ public class FileStorageService {
                                                         true,
                                                         file.getBytes());
             } catch (MalformedStreamException e) {
-                e.printStackTrace();
-                System.out.println(e.getCause());
+                logger.error("File is Malformed", e);
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error("Unable to find the location", e);
         }
         String url = beanFactory.getBean(properties.getStorageLocation(), IFileStorage.class)
                                 .uploadArtifact(fileLocation, projectName, runId, folderPath);
@@ -66,6 +68,7 @@ public class FileStorageService {
             Resource resource = new UrlResource(file.toURI());
             return resource;
         } catch (MalformedURLException e) {
+            logger.error("File is not found in the specified path = " + file.getAbsolutePath(), e);
             throw new IOException("File is not found in the specified path = " + file.getAbsolutePath());
         }
     }
