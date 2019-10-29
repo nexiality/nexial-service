@@ -18,13 +18,24 @@ public class ApplicationProperties extends ReloadApplicationProperties {
 
     public String getRegion() { return environment.getProperty(CLOUD_AWS_REGION); }
 
-    public String getLocalArtifactsPath() {
-        return UtilityHelper.getPath(environment.getProperty(LOCAL_ARTIFACTS_PATH), true);
-    }
-
     public String getStorageLocation() { return environment.getProperty(STORAGE_LOCATION); }
 
+    public String getArtifactPathPrefix() { return environment.getProperty(LOCAL_PATH_PREFIX); }
+
+    public String getArtifactPath() { return environment.getProperty(LOCAL_ARTIFACTS_PATH); }
+
+    public String getSummaryPath() { return environment.getProperty(LOCAL_EXECUTION_SUMMARY_PATH); }
+
+    public String getLocalArtifactsPath() {
+        return UtilityHelper.getPath(getArtifactPathPrefix() + getArtifactPath(), true);
+    }
+
     public String getLocalExecutionSummaryPath() {
-        return UtilityHelper.getPath(environment.getProperty(LOCAL_EXECUTION_SUMMARY_PATH), true);
+        return UtilityHelper.getPath(getArtifactPathPrefix() + getSummaryPath(), true);
+    }
+
+    public String getLocalAddress() {
+        return "http://" + environment.getProperty(SERVER_ADDRESS) + ":" +
+               environment.getProperty(SERVER_PORT) + PATH_SEPARATOR;
     }
 }

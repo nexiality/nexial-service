@@ -5,8 +5,11 @@ import java.io.IOException;
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.lang3.StringUtils;
+import org.jetbrains.annotations.NotNull;
 import org.nexial.service.domain.ApplicationProperties;
 import org.nexial.service.domain.dashboard.service.FileStorageService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -23,6 +26,7 @@ import org.springframework.web.servlet.HandlerMapping;
 public class FileStorageController {
     private final FileStorageService fileStorageService;
     private final ApplicationProperties properties;
+    private static final Logger logger = LoggerFactory.getLogger(FileStorageController.class);
 
     public FileStorageController(FileStorageService fileStorageService, ApplicationProperties properties) {
         this.fileStorageService = fileStorageService;
@@ -39,27 +43,43 @@ public class FileStorageController {
         return fileStorageService.storeFile(file, projectName, runId, folderPath);
     }
 
-    @RequestMapping("/download/**")
+    // to support download from nexial-summary folder
+    @RequestMapping("/${config.local.executionSummaryPath}/**")
+    public ResponseEntity<Resource> downloadSummary(HttpServletRequest request) throws IOException {
+        String restURL = (String) request.getAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE);
+
+        String filePath = StringUtils.substringAfter(restURL, properties.getSummaryPath());
+        filePath = properties.getLocalExecutionSummaryPath() + filePath;
+        return getResourceResponseEntity(request, filePath);
+    }
+
+    @RequestMapping("/${config.local.artifactsPath}/**")
     public ResponseEntity<Resource> download(HttpServletRequest request) throws IOException {
-        String restOfTheUrl = (String) request.getAttribute(
-            HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE);
-        String filePath = StringUtils.substringAfter(restOfTheUrl, "/download/");
+        String restURL = (String) request.getAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE);
+
+        String filePath = StringUtils.substringAfter(restURL, properties.getArtifactPath());
         filePath = properties.getLocalArtifactsPath() + filePath;
+        return getResourceResponseEntity(request, filePath);
+    }
+
+    @NotNull
+    private ResponseEntity<Resource> getResourceResponseEntity(HttpServletRequest request, String filePath)
+        throws IOException {
         File file = new File(filePath);
         String contentType;
         if (file.exists()) {
             Resource resource = fileStorageService.loadFileAsResource(file);
             contentType = request.getServletContext().getMimeType(resource.getFile().getAbsolutePath());
-            if (contentType == null) {
-                contentType = "application/octet-stream";
-            }
+            if (contentType == null) { contentType = "application/octet-stream"; }
             return ResponseEntity.ok()
                                  .contentType(MediaType.parseMediaType(contentType))
                                  .header(HttpHeaders.CONTENT_DISPOSITION,
                                          "attachment; filename=\"" + resource.getFilename() + "\"")
                                  .body(resource);
         } else {
-            throw new IOException("Specified files is not present in the path");
+            logger.info("Specified file with path " + filePath + "is not present");
+            // todo return something to let user know the error.
+            return ResponseEntity.badRequest().build();
         }
     }
 }

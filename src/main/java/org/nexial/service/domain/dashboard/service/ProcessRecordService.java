@@ -38,6 +38,7 @@ import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.nexial.core.CommandConst.CMD_REPEAT_UNTIL;
 import static org.nexial.core.NexialConst.DEF_CHARSET;
 import static org.nexial.core.NexialConst.Data.*;
+import static org.nexial.core.NexialConst.GSON;
 import static org.nexial.core.excel.ExcelConfig.*;
 import static org.nexial.service.domain.utils.Constants.*;
 import static org.nexial.service.domain.utils.Constants.Status.COMPLETED;
@@ -90,9 +91,9 @@ public class ProcessRecordService {
 
     @Async("threadPoolTaskExecutor")
     public CompletableFuture<Boolean> generateSummary() {
+        logger.info("--------" + project + "-------[" + Thread.currentThread().getName() + "]");
         dao.setProject(project);
         dao.setPrefix(prefix);
-        logger.info("--------" + project + "----------[" + Thread.currentThread().getName() + "]");
         try {
             dao.updateWorkerInfo(Thread.currentThread().getName());
             while (true) {
@@ -101,7 +102,7 @@ public class ProcessRecordService {
                 if (processExecutionDetailInfo(runIdList)) { Thread.currentThread().interrupt(); }
             }
 
-            ProcessSummaryOutput();
+            createSummaryOutput();
             dao.updateScheduleInfoStatus(COMPLETED);
         } catch (Exception e) {
             logger.error("The generating summary process for project='" + project +
@@ -116,7 +117,6 @@ public class ProcessRecordService {
 
     private boolean processExecutionDetailInfo(List<Map<String, Object>> runIdList) {
         // To make sure all records  status should be changed before another schedule call
-        boolean interrupt = false;
         for (Map<String, Object> row : runIdList) {
             String runId = (String) row.get("RunId");
             String outputPath = dao.getExecutionOutputPath(runId);
@@ -125,11 +125,10 @@ public class ProcessRecordService {
             if (StringUtils.equals(dao.getWorkerInterrupt(project, prefix), "true")) {
                 logger.info("This thread for run id " + runId + "is interrupted; Time=" +
                             SIMPLE_DATE_FORMAT.format(new Date()));
-                interrupt = true;
-                break;
+                return true;
             }
         }
-        return interrupt;
+        return false;
     }
 
     private void insertExecutionDetails(String outputPath) {
@@ -142,9 +141,7 @@ public class ProcessRecordService {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        if (content != null) {
-            processJsonData(content);
-        }
+        if (content != null) { processJsonData(content); }
         factory.getBean(properties.getStorageLocation(), IFileStorage.class).deleteFolders(outputPath);
     }
 
@@ -159,8 +156,9 @@ public class ProcessRecordService {
         int sequence = 1;
         int planSequence = 0;
         JSONArray scripts = execution.getJSONArray("nestedExecutions");
-        for (int exec = 0; exec < scripts.length(); exec++) {
-            JSONObject scriptObject = scripts.getJSONObject(exec);
+        scripts = sortScripts(scripts);
+        for (int scriptIndex = 0; scriptIndex < scripts.length(); scriptIndex++) {
+            JSONObject scriptObject = scripts.getJSONObject(scriptIndex);
             // to need to rewrite the logic
             if (scriptObject.has("planName")) {
                 String planName1 = scriptObject.getString("planName");
@@ -175,12 +173,10 @@ public class ProcessRecordService {
 
             // add iteration data
             JSONArray iterations = scriptObject.getJSONArray("nestedExecutions");
-            for (int iter = 0; iter < iterations.length(); iter++) {
-                JSONObject iterationObject = iterations.getJSONObject(iter);
+            for (int iterIndex = 0; iterIndex < iterations.length(); iterIndex++) {
+                JSONObject iterationObject = iterations.getJSONObject(iterIndex);
                 String testScriptLink = iterationObject.getString("testScriptLink");
-                String iterationId = dao.insertIterationInfo(scriptId,
-                                                             iterationObject,
-                                                             StringUtils.substringAfter(testScriptLink, project + "/"));
+                String iterationId = dao.insertIterationInfo(scriptId, iterationObject, testScriptLink);
 
                 String path = getLocalPath(testScriptLink, execution.getString("name"));
                 boolean isWindows = StringUtils.contains(execution.getString("runHostOs"), "Windows");
@@ -188,32 +184,32 @@ public class ProcessRecordService {
 
                 // add scenario details
                 JSONArray scenarios = iterationObject.getJSONArray("nestedExecutions");
-                for (int scenario = 0; scenario < scenarios.length(); scenario++) {
-                    JSONObject scenarioObject = scenarios.getJSONObject(scenario);
+                for (int scenarioIndex = 0; scenarioIndex < scenarios.length(); scenarioIndex++) {
+                    JSONObject scenarioObject = scenarios.getJSONObject(scenarioIndex);
                     String scenarioName = scenarioObject.getString("name");
-                    String scenarioId = dao.insertScenarioInfo(scenarioName, scenario + 1,
+                    String scenarioId = dao.insertScenarioInfo(scenarioName, scenarioIndex + 1,
                                                                iterationId, scenarioObject);
 
                     // add activity details
                     JSONArray activities = scenarioObject.getJSONArray("nestedExecutions");
-                    for (int act = 0; act < activities.length(); act++) {
-                        JSONObject activityObject = activities.getJSONObject(act);
+                    for (int activityIndex = 0; activityIndex < activities.length(); activityIndex++) {
+                        JSONObject activityObject = activities.getJSONObject(activityIndex);
                         String activityName = activityObject.getString("name");
 
-                        String activityId = dao.insertActivityInfo(scenarioId, act + 1,
+                        String activityId = dao.insertActivityInfo(scenarioId, activityIndex + 1,
                                                                    activityName, activityObject);
 
                         if (!iterationData.containsKey(scenarioName)) { return; }
 
                         Map<Activity, List<StepData>> scenarioData = iterationData.get(scenarioName);
-                        insertStepDetails(activityId, scenarioData, activityName, act + 1);
+                        insertStepDetails(activityId, scenarioData, activityName, activityIndex + 1);
                     }
                 }
             }
         }
     }
 
-    private void ProcessSummaryOutput() {
+    private void createSummaryOutput() {
         JsonObject projectOutputJsonObject = new JsonObject();
         JsonArray executionJsonArray = new JsonArray();
         List<Map<String, Object>> executionList = dao.getExecutionSummary();
@@ -224,24 +220,23 @@ public class ProcessRecordService {
         logger.info("\\----------------------------------------------------------------/");
 
         for (Map<String, Object> exeObjectMap : executionList) {
-            JsonObject execution = new JsonObject();
-            execution.addProperty("name", (String) exeObjectMap.get("Name"));
-            mapExecutionData(exeObjectMap, execution, "EXECUTION");
-            JsonArray nestedScripts = new JsonArray();
+            JsonObject plan = new JsonObject();
+            mapExecutionData(exeObjectMap, plan, "EXECUTION");
             Object executionId = exeObjectMap.get("Id");
             List<Map<String, Object>> executionScriptList = dao.getScriptSummaryList(executionId);
+            JsonArray nestedScripts = new JsonArray();
+
             for (Map<String, Object> exeScriptObjectMap : executionScriptList) {
                 JsonObject script = new JsonObject();
-                script.addProperty("name", (String) exeScriptObjectMap.get("Name"));
-                script.addProperty("scriptFile", (String) exeScriptObjectMap.get("ScriptURL"));
                 mapExecutionData(exeScriptObjectMap, script, "SCRIPT");
-                script.addProperty("executionLog", (String) exeObjectMap.get("LogFile"));
-                JsonArray nestedIteration = new JsonArray();
+                script.addProperty("scriptFile", (String) exeScriptObjectMap.get("ScriptURL"));
+                script.addProperty("executionLog", (String) exeObjectMap.get("ExecutionLogUrl"));
                 List<Map<String, Object>> executionIterationList = dao.getIterationList(exeScriptObjectMap.get("Id"));
+                JsonArray nestedIteration = new JsonArray();
+
                 for (Map<String, Object> exeIterationObjectMap : executionIterationList) {
                     JsonObject iteration = new JsonObject();
-                    iteration.addProperty("name", (String) exeIterationObjectMap.get("Name"));
-                    iteration.addProperty("sourceScript", (String) exeObjectMap.get("ScriptURL"));
+                    iteration.addProperty("sourceScript", (String) exeScriptObjectMap.get("ScriptURL"));
                     iteration.addProperty("testScriptLink", (String) exeIterationObjectMap.get("TestScriptUrl"));
                     mapExecutionData(exeIterationObjectMap, iteration, "ITERATION");
                     iteration.addProperty("executionLog", (String) exeObjectMap.get("LogFile"));
@@ -250,18 +245,11 @@ public class ProcessRecordService {
                 script.add("nestedExecutions", nestedIteration);
                 nestedScripts.add(script);
             }
-            List<Map<String, Object>> executionMetaData = dao.getExecutionMetas(executionId);
-            JsonObject referenceData = new JsonObject();
-            for (Map<String, Object> exeMetaDataObjectMap : executionMetaData) {
-                referenceData.addProperty((String) exeMetaDataObjectMap.get("Key"),
-                                          (String) exeMetaDataObjectMap.get("Value"));
-            }
-            execution.add("referenceData", referenceData);
-            JsonObject execution1 = new JsonObject();
-            execution1.add("plan", execution);
-            execution1.add("scriptResults", nestedScripts);
+            JsonObject execution = new JsonObject();
+            execution.add("plan", plan);
+            execution.add("scriptResults", nestedScripts);
             JsonObject finalExecution = new JsonObject();
-            finalExecution.add(formatToDate((String) exeObjectMap.get("Name")), execution1);
+            finalExecution.add(formatToDate((String) exeObjectMap.get("Name")), execution);
             executionJsonArray.add(finalExecution);
         }
 
@@ -289,7 +277,9 @@ public class ProcessRecordService {
     }
 
     private void mapExecutionData(Map<String, Object> exeObjectMap, JsonObject execution, String scopeType) {
-        List<Map<String, Object>> executionDataList = dao.getExecutionData(exeObjectMap.get("Id"), scopeType);
+        execution.addProperty("name", (String) exeObjectMap.get("Name"));
+        Object scopeId = exeObjectMap.get("Id");
+        List<Map<String, Object>> executionDataList = dao.getExecutionData(scopeId, scopeType);
         for (Map<String, Object> exeDataObjectMap : executionDataList) {
             execution.addProperty("startTime", (Long) exeDataObjectMap.get("StartTime"));
             execution.addProperty("endTime", (Long) exeDataObjectMap.get("EndTime"));
@@ -297,6 +287,14 @@ public class ProcessRecordService {
             execution.addProperty("passCount", (Integer) exeDataObjectMap.get("PassCount"));
             execution.addProperty("failCount", (Integer) exeDataObjectMap.get("FailCount"));
         }
+        List<Map<String, Object>> executionMetaData = dao.getExecutionMetas(scopeId, scopeType);
+        JsonObject referenceData = new JsonObject();
+
+        for (Map<String, Object> exeMetaDataObjectMap : executionMetaData) {
+            referenceData.addProperty((String) exeMetaDataObjectMap.get("Key"),
+                                      (String) exeMetaDataObjectMap.get("Value"));
+        }
+        execution.add("referenceData", referenceData);
     }
 
     private String getLocalPath(String testScriptLink, String runId) {
@@ -498,4 +496,17 @@ public class ProcessRecordService {
                                       Excel.getCellValue(row.get(COL_IDX_PARAMS_START)),
                                       Excel.getCellValue(row.get(COL_IDX_CAPTURE_SCREEN)));
     }
+
+    private JSONArray sortScripts(JSONArray scripts) {
+        List<Object> list = scripts.toList();
+        list.sort((script1, script2) -> compare((Map<String, Object>) script1, (Map<String, Object>) script2));
+        return new JSONArray(GSON.toJson(list));
+    }
+
+    private int compare(Map<String, Object> script1, Map<String, Object> script2) {
+        String planName1 = (String) script1.get("planName");
+        String planName2 = (String) script2.get("planName");
+        return planName1.compareTo(planName2);
+    }
 }
+

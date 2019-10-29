@@ -18,6 +18,7 @@ import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import static org.nexial.service.domain.utils.Constants.EXECUTION_DETAIL_JSON;
 import static org.nexial.service.domain.utils.Constants.PATH_SEPARATOR;
 
 @Service
@@ -33,40 +34,32 @@ public class FileStorageService {
         this.dao = dao;
     }
 
-    public String storeFile(MultipartFile file, String projectName, String runId, String folderPath) {
-        String targetLocation = null;
-        String fileName = file.getOriginalFilename();
-        File fileLocation = null;
+    public String storeFile(MultipartFile multiPartFile, String project, String runId, String folderPath) {
+        String fileName = multiPartFile.getOriginalFilename();
+        String parent = properties.getLocalArtifactsPath() + project + PATH_SEPARATOR + runId + PATH_SEPARATOR;
+
         try {
-            if (StringUtils.isBlank(folderPath)) {
-                targetLocation = properties.getLocalArtifactsPath() + projectName +
-                                 PATH_SEPARATOR + runId + PATH_SEPARATOR + fileName;
-            } else {
-                targetLocation = properties.getLocalArtifactsPath() + projectName + PATH_SEPARATOR +
-                                 runId + PATH_SEPARATOR + folderPath + PATH_SEPARATOR + fileName;
+            String targetLocation =
+                parent + (StringUtils.isBlank(folderPath) ? "" : folderPath + PATH_SEPARATOR) + fileName;
+
+            File file = FileUtil.writeBinaryFile(targetLocation, true, multiPartFile.getBytes());
+            if (fileName != null && fileName.equals(EXECUTION_DETAIL_JSON)) {
+                dao.insertIntoScheduleInfo(project, runId, targetLocation);
             }
-            try {
-                fileLocation = FileUtil.writeBinaryFile(targetLocation,
-                                                        true,
-                                                        file.getBytes());
-            } catch (MalformedStreamException e) {
-                logger.error("File is Malformed", e);
-            }
+            return beanFactory.getBean(properties.getStorageLocation(), IFileStorage.class)
+                              .uploadArtifact(file, project, runId, folderPath);
+        } catch (MalformedStreamException e) {
+            logger.error("File is Malformed", e);
         } catch (IOException e) {
             logger.error("Unable to find the location", e);
         }
-        String url = beanFactory.getBean(properties.getStorageLocation(), IFileStorage.class)
-                                .uploadArtifact(fileLocation, projectName, runId, folderPath);
-        if (fileName.equals("execution-detail.json")) {
-            dao.insertIntoScheduleInfo(projectName, runId, targetLocation);
-        }
-        return url;
+        // todo returning null for now
+        return null;
     }
 
     public Resource loadFileAsResource(File file) throws IOException {
         try {
-            Resource resource = new UrlResource(file.toURI());
-            return resource;
+            return new UrlResource(file.toURI());
         } catch (MalformedURLException e) {
             logger.error("File is not found in the specified path = " + file.getAbsolutePath(), e);
             throw new IOException("File is not found in the specified path = " + file.getAbsolutePath());

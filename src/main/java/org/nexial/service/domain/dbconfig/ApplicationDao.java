@@ -82,8 +82,8 @@ public class ApplicationDao {
     public String insertPlanInfo(String executionId, JSONObject scriptObject, int planSequence, String planName1) {
         String planId = generateId();
         String planFile = UtilityHelper.getPath(scriptObject.getString("planFile"), false);
-        sqLiteConfig.execute(getSqlStatement("SQL_INSERT_PLAN"), planId, executionId, planName1, planSequence,
-                             StringUtils.substringAfter(planFile, project + "/"));
+        sqLiteConfig.execute(getSqlStatement("SQL_INSERT_PLAN"), planId, executionId, planName1,
+                             planSequence, StringUtils.substringAfter(planFile, project + "/"));
         return planId;
     }
 
@@ -91,9 +91,9 @@ public class ApplicationDao {
         String scriptId = generateId();
         String scriptFile = UtilityHelper.getPath(scriptObject.getString("scriptFile"), false);
         sqLiteConfig.execute(getSqlStatement("SQL_INSERT_SCRIPT"),
-                             scriptId, scriptObject.getString("name"),
-                             sequence, planId, executionId,
-                             StringUtils.substringAfter(scriptFile, project + "/"));
+                             scriptId, scriptObject.getString("name"), sequence, planId,
+                             executionId, StringUtils.substringAfter(scriptFile, project + "/"));
+
         insertExecutionData(scriptObject, scriptId);
         insertExecutionMetaData(scriptObject, scriptId);
         return scriptId;
@@ -101,8 +101,9 @@ public class ApplicationDao {
 
     public String insertIterationInfo(String scriptId, JSONObject iterationObject, String testScriptLink) {
         String iterationId = generateId();
-        sqLiteConfig.execute(getSqlStatement("SQL_INSERT_ITERATION"), iterationId, iterationObject.getString("name"),
-                             scriptId, testScriptLink, iterationObject.getInt("iterationIndex"));
+        sqLiteConfig.execute(getSqlStatement("SQL_INSERT_ITERATION"),
+                             iterationId, iterationObject.getString("name"), scriptId,
+                             testScriptLink, iterationObject.getInt("iterationIndex"));
 
         insertExecutionData(iterationObject, iterationId);
         insertExecutionMetaData(iterationObject, iterationId);
@@ -119,13 +120,12 @@ public class ApplicationDao {
         }
     }
 
-    public String insertScenarioInfo(String scenario,
-                                     int scenarioIndex,
-                                     String iterationId,
-                                     JSONObject scenarioObject) {
+    public String insertScenarioInfo(String scenario, int scenarioIndex,
+                                     String iterationId, JSONObject scenarioObject) {
         String scenarioId = generateId();
         sqLiteConfig.execute(getSqlStatement("SQL_INSERT_SCENARIO"), scenarioId,
                              scenario, iterationId, scenarioIndex, "scenarioURL");
+
         insertExecutionData(scenarioObject, scenarioId);
         insertExecutionMetaData(scenarioObject, scenarioId);
         return scenarioId;
@@ -136,6 +136,7 @@ public class ApplicationDao {
         String activityId = generateId();
         sqLiteConfig.execute(getSqlStatement("SQL_INSERT_ACTIVITY"),
                              activityId, activityName, scenarioId, activityIndex);
+
         insertExecutionData(activityObject, activityId);
         insertExecutionMetaData(activityObject, activityId);
         return activityId;
@@ -153,47 +154,27 @@ public class ApplicationDao {
         });
     }
 
-    public void insertStepLinks(String stepId, StepData stepData) {
-        List<List<Object>> stepLinkParams = stepData.getStepLinkParams();
-        if (stepLinkParams == null || stepLinkParams.size() == 0) { return; }
-        stepLinkParams.forEach(list -> {
-            if (list.size() == 0) { return; }
-            list.add(0, generateId());
-            list.add(1, stepId);
-            sqLiteConfig.execute(getSqlStatement("SQL_INSERT_STEP_LINKS"), list.toArray());
-        });
+    public void deleteWorkerInfo() { sqLiteConfig.execute(getSqlStatement("SQL_DELETE_WORKER_INFO"), project, prefix); }
 
+    public void insertIntoScheduleInfo(String projectName, String runId, String outputPath) {
+        String dateNow = SIMPLE_DATE_FORMAT.format(new Date());
+        String prefix = StringUtils.substringBefore(runId, ".");
+        String id = StringUtils.substringAfter(runId, ".");
+        if (StringUtils.isEmpty(id)) {
+            prefix = "";
+        }
+        Object[] param = {generateId(), projectName, prefix, runId, RECEIVED, dateNow,
+                          dateNow, UtilityHelper.getPath(outputPath, false)};
+        sqLiteConfig.execute(getSqlStatement("SQL_INSERT_SCHEDULE_INFO"), param);
     }
 
-    public void insertLogInfo(String stepId, StepData steps) {
-        List<List<Object>> logsParams = steps.getLogsParams();
-        if (logsParams == null || logsParams.size() == 0) { return; }
-        logsParams.forEach(list -> {
-            if (list.size() == 0) { return; }
-            list.add(0, generateId());
-            list.add(1, stepId);
-            sqLiteConfig.execute(getSqlStatement("SQL_INSERT_LOGS"), list.toArray());
-        });
-
+    public void updateWorkerInterrupt(String projectName, String prefix) {
+        sqLiteConfig.execute(getSqlStatement("SQL_UPDATE_WORKER_INFO"), projectName, prefix);
     }
 
-    public void insertExecutionData(JSONObject json, String scopeId) {
-        Object[] executionDataParams = {generateId(), json.getLong("startTime"),
-                                        json.getLong("endTime"), json.getInt("totalSteps"),
-                                        json.getInt("passCount"), json.getInt("failCount"),
-                                        json.getInt("warnCount"), json.getInt("executed"),
-                                        json.getBoolean("failedFast"), scopeId,
-                                        json.getString("executionLevel")};
-        sqLiteConfig.execute(getSqlStatement("SQL_INSERT_EXECUTION_DATA"), executionDataParams);
-    }
-
-    public void insertExecutionMetaData(JSONObject json, String scopeId) {
-        if (!json.has("referenceData")) { return; }
-        String creationTime = DateUtility.format(json.getLong("startTime"));
-        Map<String, Object> referenceMap = json.getJSONObject("referenceData").toMap();
-        referenceMap.forEach((key, value) -> sqLiteConfig.execute(getSqlStatement("SQL_INSERT_EXECUTION_META_DATA"),
-                                                                  generateId(), key, value, creationTime, scopeId,
-                                                                  json.getString("executionLevel")));
+    public List<Map<String, Object>> getExecutionMetas(Object scopeId, String scopeType) {
+        return sqLiteConfig.queryForList(getSqlStatement("SQL_SELECT_EXECUTION_META"),
+                                         new Object[]{scopeId, scopeType});
     }
 
     public String updateWorkerInfo(String threadName) {
@@ -202,8 +183,9 @@ public class ApplicationDao {
         return id;
     }
 
-    public void deleteWorkerInfo() {
-        sqLiteConfig.execute(getSqlStatement("SQL_DELETE_WORKER_INFO"), project, prefix);
+    public List<Map<String, Object>> getExecutionData(Object scopeId, String scopeType) {
+        return sqLiteConfig.queryForList(getSqlStatement("SQL_SELECT_EXECUTION_DATA"),
+                                         new Object[]{scopeId, scopeType});
     }
 
     public void updateScheduleInfoStatus(Status status) {
@@ -218,16 +200,16 @@ public class ApplicationDao {
                              INPROGRESS, processingDate, runId);
     }
 
-    public void insertIntoScheduleInfo(String projectName, String runId, String outputPath) {
-        String dateNow = SIMPLE_DATE_FORMAT.format(new Date());
-        String prefix = StringUtils.substringBefore(runId, ".");
-        String id = StringUtils.substringAfter(runId, ".");
-        if (StringUtils.isEmpty(id)) {
-            prefix = "";
-        }
-        Object[] param = {generateId(), projectName, prefix, runId, RECEIVED, dateNow,
-                          dateNow, UtilityHelper.getPath(outputPath, false)};
-        sqLiteConfig.execute("SQL_INSERT_SCHEDULE_INFO", param);
+    private void insertStepLinks(String stepId, StepData stepData) {
+        List<List<Object>> stepLinkParams = stepData.getStepLinkParams();
+        if (stepLinkParams == null || stepLinkParams.size() == 0) { return; }
+        stepLinkParams.forEach(list -> {
+            if (list.size() == 0) { return; }
+            list.add(0, generateId());
+            list.add(1, stepId);
+            sqLiteConfig.execute(getSqlStatement("SQL_INSERT_STEP_LINKS"), list.toArray());
+        });
+
     }
 
     public List<Map<String, Object>> getRunIds() {
@@ -248,11 +230,11 @@ public class ApplicationDao {
 
     }
 
-    public String getWorkerId(String projectName, String prefix) {
+    /*public String getWorkerId(String projectName, String prefix) {
         return (String) sqLiteConfig.queryForObject(getSqlStatement("SQL_SELECT_WORKER_INFO"),
                                                     new Object[]{projectName, prefix},
                                                     String.class);
-    }
+    }*/
 
     public String getWorkerInterrupt(String projectName, String prefix) {
         return (String) sqLiteConfig.queryForObject(getSqlStatement("SQL_SELECT_WORKER_INTERRUPT"),
@@ -260,8 +242,16 @@ public class ApplicationDao {
                                                     String.class);
     }
 
-    public void updateWorkerInterrupt(String projectName, String prefix) {
-        sqLiteConfig.execute(getSqlStatement("SQL_UPDATE_WORKER_INFO"), new Object[]{projectName, prefix});
+    private void insertLogInfo(String stepId, StepData steps) {
+        List<List<Object>> logsParams = steps.getLogsParams();
+        if (logsParams == null || logsParams.size() == 0) { return; }
+        logsParams.forEach(list -> {
+            if (list.size() == 0) { return; }
+            list.add(0, generateId());
+            list.add(1, stepId);
+            sqLiteConfig.execute(getSqlStatement("SQL_INSERT_LOGS"), list.toArray());
+        });
+
     }
 
     public List<Map<String, Object>> getExecutionSummary() {
@@ -276,13 +266,23 @@ public class ApplicationDao {
         return sqLiteConfig.queryForList(getSqlStatement("SQL_SELECT_ITERATION"), new Object[]{scriptId});
     }
 
-    public List<Map<String, Object>> getExecutionMetas(Object executionId) {
-        return sqLiteConfig.queryForList(getSqlStatement("SQL_SELECT_EXECUTION_META"),
-                                         new Object[]{executionId, "EXECUTION"});
+    private void insertExecutionData(JSONObject json, String scopeId) {
+        Object[] executionDataParams = {generateId(), json.getLong("startTime"),
+                                        json.getLong("endTime"), json.getInt("totalSteps"),
+                                        json.getInt("passCount"), json.getInt("failCount"),
+                                        json.getInt("warnCount"), json.getInt("executed"),
+                                        json.getBoolean("failedFast"), scopeId,
+                                        json.getString("executionLevel")};
+        sqLiteConfig.execute(getSqlStatement("SQL_INSERT_EXECUTION_DATA"), executionDataParams);
     }
 
-    public List<Map<String, Object>> getExecutionData(Object id, String scopeType) {
-        return sqLiteConfig.queryForList(getSqlStatement("SQL_SELECT_EXECUTION_DATA"), new Object[]{id, scopeType});
+    private void insertExecutionMetaData(JSONObject json, String scopeId) {
+        if (!json.has("referenceData")) { return; }
+        String creationTime = DateUtility.format(json.getLong("startTime"));
+        Map<String, Object> referenceMap = json.getJSONObject("referenceData").toMap();
+        referenceMap.forEach((key, value) -> sqLiteConfig.execute(getSqlStatement("SQL_INSERT_EXECUTION_META_DATA"),
+                                                                  generateId(), key, value, creationTime, scopeId,
+                                                                  json.getString("executionLevel")));
     }
 
     public List<Map<String, Object>> getReceivedProjects() {

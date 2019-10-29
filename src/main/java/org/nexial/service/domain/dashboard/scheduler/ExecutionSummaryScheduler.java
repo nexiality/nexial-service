@@ -26,7 +26,7 @@ public class ExecutionSummaryScheduler {
         this.beanFactory = beanFactory;
     }
 
-    @Scheduled(fixedRate = 1000000)
+    @Scheduled(fixedRate = 100000)
     private void summaryScheduler() {
         //Todo  use Spring functionality and configure through xml
         logger.info("Summary Scheduler called " + DateUtility.format(System.currentTimeMillis()));
@@ -46,7 +46,6 @@ public class ExecutionSummaryScheduler {
                 CompletableFuture<Boolean> completableFuture = processRecordService.generateSummary();
 
                 logger.info("--------" + projectName + "-----Started at ----" + new Date().getTime());
-                // todo need to think new logic may be ProcessRecordService as key
                 completableFutures.put(processRecordService, completableFuture);
             }
         }

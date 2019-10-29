@@ -26,21 +26,15 @@ public class AwsS3 implements IFileStorage {
     }
 
     @Override
-    public String uploadArtifact(File file, String projectName, String runId, String folderPath) {
-        String artifactPath = properties.getArtifactCloudBase() +
-                              projectName +
-                              PATH_SEPARATOR +
-                              runId;
-        if (folderPath != null) {
-            artifactPath = artifactPath + PATH_SEPARATOR + folderPath;
-        }
+    public String uploadArtifact(File file, String project, String runId, String folderPath) {
+        String artifactPath = properties.getArtifactCloudBase() + project + PATH_SEPARATOR + runId;
+        artifactPath += folderPath != null ? PATH_SEPARATOR + folderPath : "";
         return uploadToCloud(file, artifactPath, false);
     }
 
     @Override
     public void uploadSummary(File file, String project) {
-        String summaryOutputKey =
-            properties.getOutputCloudBase() + project;
+        String summaryOutputKey = properties.getOutputCloudBase() + project;
         uploadToCloud(file, summaryOutputKey, true);
     }
 
