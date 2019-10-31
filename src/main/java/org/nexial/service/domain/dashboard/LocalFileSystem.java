@@ -22,23 +22,21 @@ public class LocalFileSystem implements IFileStorage {
 
     @Override
     public String uploadArtifact(File file, String projectName, String runId, String folderPath) {
-        return getLocalUrl(file);
+        return getLocalUrl(file, "execution");
     }
 
     @Override
-    public void uploadSummary(File file, String project) {
-        getLocalUrl(file);
-    }
+    public void uploadSummary(File file, String project) { getLocalUrl(file, "dashboard"); }
 
     @Override
     public void deleteFolders(String path) { }
 
     @NotNull
-    private String getLocalUrl(File file) {
+    private String getLocalUrl(File file, String urlPath) {
         try {
             String url = UtilityHelper.getPath(file.getCanonicalPath(), false);
-            url = StringUtils.substringAfter(url, properties.getArtifactPathPrefix());
-            return properties.getLocalAddress() + url;
+            return properties.getLocalAddress() + urlPath +
+                   StringUtils.substringAfter(url, properties.getArtifactPath());
         } catch (IOException e) {
             logger.error("Unable to find the file - " + file.getAbsolutePath(), e);
             return file.getAbsolutePath();

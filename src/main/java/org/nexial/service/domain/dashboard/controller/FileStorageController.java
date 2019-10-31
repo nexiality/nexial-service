@@ -44,21 +44,23 @@ public class FileStorageController {
     }
 
     // to support download from nexial-summary folder
-    @RequestMapping("/${config.local.executionSummaryPath}/**")
+    // For the files:- http://172.00.00:8099/execution/project/runid/junit.xml
+    @RequestMapping("/execution/**")
     public ResponseEntity<Resource> downloadSummary(HttpServletRequest request) throws IOException {
         String restURL = (String) request.getAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE);
 
-        String filePath = StringUtils.substringAfter(restURL, properties.getSummaryPath());
-        filePath = properties.getLocalExecutionSummaryPath() + filePath;
+        String filePath = StringUtils.substringAfter(restURL, "/execution/");
+        filePath = properties.getLocalArtifactsPath() + filePath;
         return getResourceResponseEntity(request, filePath);
     }
 
-    @RequestMapping("/${config.local.artifactsPath}/**")
+    // For the files:- http://172.00.00:8099/dashboard/project/summary_output.json
+    @RequestMapping("/dashboard/**")
     public ResponseEntity<Resource> download(HttpServletRequest request) throws IOException {
         String restURL = (String) request.getAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE);
 
-        String filePath = StringUtils.substringAfter(restURL, properties.getArtifactPath());
-        filePath = properties.getLocalArtifactsPath() + filePath;
+        String filePath = StringUtils.substringAfter(restURL, "/dashboard/");
+        filePath = properties.getLocalExecutionSummaryPath() + filePath;
         return getResourceResponseEntity(request, filePath);
     }
 

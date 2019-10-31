@@ -31,9 +31,6 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.nexial.core.CommandConst.CMD_REPEAT_UNTIL;
 import static org.nexial.core.NexialConst.DEF_CHARSET;
@@ -48,6 +45,7 @@ import static org.nexial.service.domain.utils.Constants.Status.FAILED;
 @Scope("prototype")
 public class ProcessRecordService {
     private static final Logger logger = LoggerFactory.getLogger(ProcessRecordService.class);
+    private static final HashMap<String, Boolean> THREAD_STATUS = new HashMap<>();
 
     private ApplicationDao dao;
     private final ApplicationProperties properties;
@@ -79,27 +77,31 @@ public class ProcessRecordService {
     public List<Map<String, Object>> getReceivedProjects() { return dao.getReceivedProjects(); }
 
     public void interruptThread() {
-        dao.updateWorkerInterrupt(project, prefix);
-        logger.info("The thread must be interrupted at time= " + SIMPLE_DATE_FORMAT.format(new Date()));
-
-        // Terminate thread instantly;
-        /*String workerId = dao.getWorkerId(projectName, prefix);
-
-        Thread.getAllStackTraces().keySet().stream()
-              .filter(t -> t.getName().equals(workerId)).forEach(Thread::interrupt);*/
+        String workerThread = dao.getWorkerId(project, prefix);
+        if (StringUtils.isNotBlank(workerThread) && THREAD_STATUS.containsKey(workerThread)) {
+            THREAD_STATUS.put(workerThread, true);
+            logger.info("The thread must be interrupted at time= " + SIMPLE_DATE_FORMAT.format(new Date()));
+        }
     }
 
     @Async("threadPoolTaskExecutor")
     public CompletableFuture<Boolean> generateSummary() {
-        logger.info("--------" + project + "-------[" + Thread.currentThread().getName() + "]");
+        String threadName = Thread.currentThread().getName();
+        logger.info("--------" + project + "-------[" + threadName + "]");
         dao.setProject(project);
         dao.setPrefix(prefix);
+
+        THREAD_STATUS.put(threadName, false);
+        dao.updateWorkerInfo(threadName);
         try {
-            dao.updateWorkerInfo(Thread.currentThread().getName());
             while (true) {
                 List<Map<String, Object>> runIdList = dao.getRunIds();
                 if (runIdList.isEmpty()) { break; }
-                if (processExecutionDetailInfo(runIdList)) { Thread.currentThread().interrupt(); }
+                if (processExecutionDetailInfo(runIdList)) {
+                    // Thread.currentThread().interrupt();
+                    // throw new InterruptedException("");
+                    break;
+                }
             }
 
             createSummaryOutput();
@@ -111,6 +113,7 @@ public class ProcessRecordService {
             dao.updateScheduleInfoStatus(FAILED);
         } finally {
             dao.deleteWorkerInfo();
+            THREAD_STATUS.remove(threadName);
         }
         return CompletableFuture.completedFuture(true);
     }
@@ -122,8 +125,10 @@ public class ProcessRecordService {
             String outputPath = dao.getExecutionOutputPath(runId);
             dao.updateScheduleInfoStatusInProgress(runId);
             insertExecutionDetails(outputPath);
-            if (StringUtils.equals(dao.getWorkerInterrupt(project, prefix), "true")) {
-                logger.info("This thread for run id " + runId + "is interrupted; Time=" +
+
+            String threadName = Thread.currentThread().getName();
+            if (THREAD_STATUS.containsKey(threadName) && THREAD_STATUS.get(threadName)) {
+                logger.info("This thread for run id " + runId + " is interrupted; Time=" +
                             SIMPLE_DATE_FORMAT.format(new Date()));
                 return true;
             }
@@ -134,15 +139,15 @@ public class ProcessRecordService {
     private void insertExecutionDetails(String outputPath) {
         outputPath = UtilityHelper.getPath(outputPath, false);
 
-        String content = null;
         //Todo change path store full path
         try {
-            content = FileUtils.readFileToString(new File(outputPath), DEF_CHARSET);
+            String content = FileUtils.readFileToString(new File(outputPath), DEF_CHARSET);
+            if (content != null) { processJsonData(content); }
         } catch (IOException e) {
             e.printStackTrace();
+        } finally {
+            factory.getBean(properties.getStorageLocation(), IFileStorage.class).deleteFolders(outputPath);
         }
-        if (content != null) { processJsonData(content); }
-        factory.getBean(properties.getStorageLocation(), IFileStorage.class).deleteFolders(outputPath);
     }
 
     private void processJsonData(String content) {
@@ -201,8 +206,7 @@ public class ProcessRecordService {
 
                         if (!iterationData.containsKey(scenarioName)) { return; }
 
-                        Map<Activity, List<StepData>> scenarioData = iterationData.get(scenarioName);
-                        insertStepDetails(activityId, scenarioData, activityName, activityIndex + 1);
+                        insertStepDetails(activityId, iterationData.get(scenarioName), activityName, activityIndex + 1);
                     }
                 }
             }
@@ -210,8 +214,7 @@ public class ProcessRecordService {
     }
 
     private void createSummaryOutput() {
-        JsonObject projectOutputJsonObject = new JsonObject();
-        JsonArray executionJsonArray = new JsonArray();
+        JSONArray executionJSONArray = new JSONArray();
         List<Map<String, Object>> executionList = dao.getExecutionSummary();
         executionList.sort(Comparator.comparing(row -> StringUtils.substringAfter(row.get("name").toString(), ".")));
         executionList = executionList.subList(0, Math.min(executionList.size(), 90));
@@ -220,53 +223,52 @@ public class ProcessRecordService {
         logger.info("\\----------------------------------------------------------------/");
 
         for (Map<String, Object> exeObjectMap : executionList) {
-            JsonObject plan = new JsonObject();
+            JSONObject plan = new JSONObject();
             mapExecutionData(exeObjectMap, plan, "EXECUTION");
             Object executionId = exeObjectMap.get("Id");
             List<Map<String, Object>> executionScriptList = dao.getScriptSummaryList(executionId);
-            JsonArray nestedScripts = new JsonArray();
+            JSONArray nestedScripts = new JSONArray();
 
             for (Map<String, Object> exeScriptObjectMap : executionScriptList) {
-                JsonObject script = new JsonObject();
+                JSONObject script = new JSONObject();
                 mapExecutionData(exeScriptObjectMap, script, "SCRIPT");
-                script.addProperty("scriptFile", (String) exeScriptObjectMap.get("ScriptURL"));
-                script.addProperty("executionLog", (String) exeObjectMap.get("ExecutionLogUrl"));
+                script.put("scriptFile", (String) exeScriptObjectMap.get("ScriptURL"));
+                script.put("executionLog", (String) exeObjectMap.get("ExecutionLogUrl"));
                 List<Map<String, Object>> executionIterationList = dao.getIterationList(exeScriptObjectMap.get("Id"));
-                JsonArray nestedIteration = new JsonArray();
+                JSONArray nestedIteration = new JSONArray();
 
                 for (Map<String, Object> exeIterationObjectMap : executionIterationList) {
-                    JsonObject iteration = new JsonObject();
-                    iteration.addProperty("sourceScript", (String) exeScriptObjectMap.get("ScriptURL"));
-                    iteration.addProperty("testScriptLink", (String) exeIterationObjectMap.get("TestScriptUrl"));
+                    JSONObject iteration = new JSONObject();
+                    iteration.put("sourceScript", exeScriptObjectMap.get("ScriptURL"));
+                    iteration.put("testScriptLink", exeIterationObjectMap.get("TestScriptUrl"));
                     mapExecutionData(exeIterationObjectMap, iteration, "ITERATION");
-                    iteration.addProperty("executionLog", (String) exeObjectMap.get("LogFile"));
-                    nestedIteration.add(iteration);
+                    iteration.put("executionLog", exeObjectMap.get("LogFile"));
+                    nestedIteration.put(iteration);
                 }
-                script.add("nestedExecutions", nestedIteration);
-                nestedScripts.add(script);
+                script.put("nestedExecutions", nestedIteration);
+                nestedScripts.put(script);
             }
-            JsonObject execution = new JsonObject();
-            execution.add("plan", plan);
-            execution.add("scriptResults", nestedScripts);
-            JsonObject finalExecution = new JsonObject();
-            finalExecution.add(formatToDate((String) exeObjectMap.get("Name")), execution);
-            executionJsonArray.add(finalExecution);
+            JSONObject execution = new JSONObject();
+            execution.put("plan", plan);
+            execution.put("scriptResults", nestedScripts);
+            JSONObject finalExecution = new JSONObject();
+            finalExecution.put(formatToDate((String) exeObjectMap.get("Name")), execution);
+            executionJSONArray.put(finalExecution);
         }
 
-        projectOutputJsonObject.add(RESULTS, executionJsonArray);
-        if (!StringUtils.isEmpty(prefix)) {
-            prefix = "." + prefix;
-        }
+        JSONObject summaryOutputJson = new JSONObject();
+        summaryOutputJson.put(RESULTS, executionJSONArray);
+        String folder = project + (!StringUtils.isEmpty(prefix) ? "." + prefix : "");
+
         String summaryPath = properties.getLocalExecutionSummaryPath();
-        String path = summaryPath + PATH_SEPARATOR + project +
-                      prefix + PATH_SEPARATOR + SUMMARY_OUTPUT_FILE;
+        String path = summaryPath + PATH_SEPARATOR + folder + PATH_SEPARATOR + SUMMARY_OUTPUT_FILE;
         try {
-            FileUtil.createNewFile(new File(path), projectOutputJsonObject.toString());
+            FileUtil.createNewFile(new File(path), summaryOutputJson.toString());
         } catch (Exception e) {
             e.printStackTrace();
         }
         factory.getBean(properties.getStorageLocation(), IFileStorage.class)
-               .uploadSummary(new File(path), project + prefix);
+               .uploadSummary(new File(path), folder);
         logger.info("+++" + project + "upladed on server");
     }
 
@@ -276,25 +278,24 @@ public class ProcessRecordService {
                groups.get(3) + ":" + groups.get(4) + ":" + groups.get(5);
     }
 
-    private void mapExecutionData(Map<String, Object> exeObjectMap, JsonObject execution, String scopeType) {
-        execution.addProperty("name", (String) exeObjectMap.get("Name"));
+    private void mapExecutionData(Map<String, Object> exeObjectMap, JSONObject execution, String scopeType) {
+        execution.put("name", exeObjectMap.get("Name"));
         Object scopeId = exeObjectMap.get("Id");
         List<Map<String, Object>> executionDataList = dao.getExecutionData(scopeId, scopeType);
         for (Map<String, Object> exeDataObjectMap : executionDataList) {
-            execution.addProperty("startTime", (Long) exeDataObjectMap.get("StartTime"));
-            execution.addProperty("endTime", (Long) exeDataObjectMap.get("EndTime"));
-            execution.addProperty("totalSteps", (Integer) exeDataObjectMap.get("TotalSteps"));
-            execution.addProperty("passCount", (Integer) exeDataObjectMap.get("PassCount"));
-            execution.addProperty("failCount", (Integer) exeDataObjectMap.get("FailCount"));
+            execution.put("startTime", exeDataObjectMap.get("StartTime"));
+            execution.put("endTime", exeDataObjectMap.get("EndTime"));
+            execution.put("totalSteps", exeDataObjectMap.get("TotalSteps"));
+            execution.put("passCount", exeDataObjectMap.get("PassCount"));
+            execution.put("failCount", exeDataObjectMap.get("FailCount"));
         }
         List<Map<String, Object>> executionMetaData = dao.getExecutionMetas(scopeId, scopeType);
-        JsonObject referenceData = new JsonObject();
+        JSONObject referenceData = new JSONObject();
 
         for (Map<String, Object> exeMetaDataObjectMap : executionMetaData) {
-            referenceData.addProperty((String) exeMetaDataObjectMap.get("Key"),
-                                      (String) exeMetaDataObjectMap.get("Value"));
+            referenceData.put((String) exeMetaDataObjectMap.get("Key"), exeMetaDataObjectMap.get("Value"));
         }
-        execution.add("referenceData", referenceData);
+        execution.put("referenceData", referenceData);
     }
 
     private String getLocalPath(String testScriptLink, String runId) {
@@ -480,8 +481,8 @@ public class ProcessRecordService {
 
     private String getLinkLabel(String text) {
         if (StringUtils.isBlank(text)) { return text; }
-        String[] strings = StringUtils.substringsBetween(text, "\"", "\"");
-        return strings[strings.length - 1];
+        String[] subStrings = StringUtils.substringsBetween(text, "\"", "\"");
+        return subStrings[subStrings.length - 1];
     }
 
     private static boolean isContainLogs(List<XSSFCell> row) {
