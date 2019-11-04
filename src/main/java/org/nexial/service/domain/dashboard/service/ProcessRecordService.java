@@ -20,8 +20,7 @@ import org.nexial.core.excel.ExcelArea;
 import org.nexial.core.utils.JsonUtils;
 import org.nexial.service.domain.ApplicationProperties;
 import org.nexial.service.domain.dashboard.IFileStorage;
-import org.nexial.service.domain.dashboard.scheduler.Activity;
-import org.nexial.service.domain.dashboard.scheduler.Activity.StepData;
+import org.nexial.service.domain.dashboard.scheduler.StepData;
 import org.nexial.service.domain.dbconfig.ApplicationDao;
 import org.nexial.service.domain.utils.UtilityHelper;
 import org.slf4j.Logger;
@@ -185,7 +184,7 @@ public class ProcessRecordService {
 
                 String path = getLocalPath(testScriptLink, execution.getString("name"));
                 boolean isWindows = StringUtils.contains(execution.getString("runHostOs"), "Windows");
-                Map<String, Map<Activity, List<StepData>>> iterationData = parseExcel(iterationId, path, isWindows);
+                Map<String, Map<String, List<StepData>>> iterationData = parseExcel(iterationId, path, isWindows);
 
                 // add scenario details
                 JSONArray scenarios = iterationObject.getJSONArray("nestedExecutions");
@@ -269,7 +268,7 @@ public class ProcessRecordService {
         }
         factory.getBean(properties.getStorageLocation(), IFileStorage.class)
                .uploadSummary(new File(path), folder);
-        logger.info("+++" + project + "upladed on server");
+        logger.info("+++" + project + "uploaded on server");
     }
 
     private String formatToDate(String name) {
@@ -305,12 +304,12 @@ public class ProcessRecordService {
                runId + PATH_SEPARATOR + StringUtils.substringAfterLast(link, PATH_SEPARATOR);
     }
 
-    private Map<String, Map<Activity, List<StepData>>> parseExcel(String iterationId, String path, boolean isWindows) {
+    private Map<String, Map<String, List<StepData>>> parseExcel(String iterationId, String path, boolean isWindows) {
         StopWatch watch = new StopWatch();
         watch.start();
         File f = new File(path);
         Excel excel;
-        Map<String, Map<Activity, List<StepData>>> scenarios = new HashMap<>();
+        Map<String, Map<String, List<StepData>>> scenarios = new HashMap<>();
         try {
             excel = new Excel(f, false, false);
             excel.getWorksheetsStartWith("").forEach(worksheet -> {
@@ -324,9 +323,8 @@ public class ProcessRecordService {
                 ExcelAddress address = new ExcelAddress(FIRST_STEP_ROW + ":" + COL_REASON +
                                                         worksheet.getSheet().getLastRowNum());
                 ExcelArea area = new ExcelArea(worksheet, address, false);
-                String testCase = null;
-                int activitySeq = 0;
-                Map<Activity, List<StepData>> activities = new HashMap<>();
+                Map<String, List<StepData>> activities = new HashMap<>();
+                String activity = null;
                 List<StepData> steps = new ArrayList<>();
                 List<List<XSSFCell>> wholeArea = area.getWholeArea();
 
@@ -335,11 +333,10 @@ public class ProcessRecordService {
                     List<XSSFCell> row = wholeArea.get(rowIndex);
                     if (isEmptyRow(row)) { break; }
 
-                    String activity = Excel.getCellValue(row.get(COL_IDX_TESTCASE));
-                    if (StringUtils.isNotBlank(activity)) {
-                        if (testCase != null) { activities.put(new Activity(testCase, activitySeq), steps); }
-                        testCase = activity;
-                        activitySeq++;
+                    String currentActivity = Excel.getCellValue(row.get(COL_IDX_TESTCASE));
+                    if (StringUtils.isNotBlank(currentActivity)) {
+                        if (activity != null) { activities.put(activity, steps); }
+                        activity = currentActivity;
                         steps = new ArrayList<>();
                     }
                     List<List<Object>> stepLinks = new ArrayList<>();
@@ -373,7 +370,7 @@ public class ProcessRecordService {
                         rowIndex += totalSteps;
                     }
                 }
-                activities.put(new Activity(testCase, activitySeq), steps);
+                activities.put(activity, steps);
                 scenarios.put(worksheet.getName(), activities);
             });
             excel.close();
@@ -450,10 +447,9 @@ public class ProcessRecordService {
         return list;
     }
 
-    private void insertStepDetails(String activityId, Map<Activity, List<StepData>> scenarioData,
+    private void insertStepDetails(String activityId, Map<String, List<StepData>> scenarioData,
                                    String activityName, int activitySeq) {
-        Activity activity = new Activity(StringUtils.replace(activityName, "\\n", "\n"), activitySeq);
-        List<StepData> steps = scenarioData.get(activity);
+        List<StepData> steps = scenarioData.get(StringUtils.replace(activityName, "\\n", "\n"));
 
         if (steps == null) {
             logger.info("Steps are null  for activity" + activityName + " and " + activitySeq);

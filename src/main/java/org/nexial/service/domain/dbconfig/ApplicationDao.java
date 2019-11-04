@@ -16,7 +16,7 @@ import org.nexial.commons.utils.ResourceUtils;
 import org.nexial.core.excel.Excel;
 import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.utils.JSONPath;
-import org.nexial.service.domain.dashboard.scheduler.Activity.StepData;
+import org.nexial.service.domain.dashboard.scheduler.StepData;
 import org.nexial.service.domain.utils.Constants.Status;
 import org.nexial.service.domain.utils.UtilityHelper;
 import org.springframework.stereotype.Repository;

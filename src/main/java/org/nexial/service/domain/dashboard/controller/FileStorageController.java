@@ -46,7 +46,7 @@ public class FileStorageController {
     // to support download from nexial-summary folder
     // For the files:- http://172.00.00:8099/execution/project/runid/junit.xml
     @RequestMapping("/execution/**")
-    public ResponseEntity<Resource> downloadSummary(HttpServletRequest request) throws IOException {
+    public ResponseEntity<Object> downloadSummary(HttpServletRequest request) throws IOException {
         String restURL = (String) request.getAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE);
 
         String filePath = StringUtils.substringAfter(restURL, "/execution/");
@@ -56,7 +56,7 @@ public class FileStorageController {
 
     // For the files:- http://172.00.00:8099/dashboard/project/summary_output.json
     @RequestMapping("/dashboard/**")
-    public ResponseEntity<Resource> download(HttpServletRequest request) throws IOException {
+    public ResponseEntity<Object> download(HttpServletRequest request) throws IOException {
         String restURL = (String) request.getAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE);
 
         String filePath = StringUtils.substringAfter(restURL, "/dashboard/");
@@ -65,7 +65,7 @@ public class FileStorageController {
     }
 
     @NotNull
-    private ResponseEntity<Resource> getResourceResponseEntity(HttpServletRequest request, String filePath)
+    private ResponseEntity<Object> getResourceResponseEntity(HttpServletRequest request, String filePath)
         throws IOException {
         File file = new File(filePath);
         String contentType;
@@ -81,7 +81,8 @@ public class FileStorageController {
         } else {
             logger.info("Specified file with path " + filePath + "is not present");
             // todo return something to let user know the error.
-            return ResponseEntity.badRequest().build();
+
+            return ResponseEntity.status(400).contentType(MediaType.APPLICATION_JSON).body("\"Wrong File\": + \"\"");
         }
     }
 }
