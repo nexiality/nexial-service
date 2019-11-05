@@ -32,6 +32,7 @@ public class ExecutionSummaryScheduler {
         logger.info("Summary Scheduler called " + DateUtility.format(System.currentTimeMillis()));
         List<Map<String, Object>> projectList = beanFactory.getBean(ProcessRecordService.class).getReceivedProjects();
         Map<ProcessRecordService, CompletableFuture<Boolean>> completableFutures = new ConcurrentHashMap<>();
+
         for (Map<String, Object> row : projectList) {
             //check whether there is a worker thread is present or not if yes dont add those project/prefix
             ProcessRecordService processRecordService = beanFactory.getBean(ProcessRecordService.class);
@@ -43,12 +44,12 @@ public class ExecutionSummaryScheduler {
             int count = processRecordService.getWorkerCount();
 
             if (count == 0) {
-                CompletableFuture<Boolean> completableFuture = processRecordService.generateSummary();
-
                 logger.info("--------" + projectName + "-----Started at ----" + new Date().getTime());
+                CompletableFuture<Boolean> completableFuture = processRecordService.generateSummary();
                 completableFutures.put(processRecordService, completableFuture);
             }
         }
+
         while (completableFutures.size() > 0) {
             for (Entry<ProcessRecordService, CompletableFuture<Boolean>> entry : completableFutures.entrySet()) {
                 ProcessRecordService processRecord = entry.getKey();

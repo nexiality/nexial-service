@@ -16,7 +16,7 @@ import org.nexial.commons.utils.ResourceUtils;
 import org.nexial.core.excel.Excel;
 import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.utils.JSONPath;
-import org.nexial.service.domain.dashboard.scheduler.Activity.StepData;
+import org.nexial.service.domain.dashboard.scheduler.StepData;
 import org.nexial.service.domain.utils.Constants.Status;
 import org.nexial.service.domain.utils.UtilityHelper;
 import org.springframework.stereotype.Repository;
@@ -27,8 +27,7 @@ import static org.nexial.core.NexialConst.Project.NEXIAL_EXECUTION_TYPE_SCRIPT;
 import static org.nexial.core.excel.ExcelConfig.ADDR_FIRST_DATA_COL;
 import static org.nexial.service.domain.utils.Constants.PATH_SEPARATOR;
 import static org.nexial.service.domain.utils.Constants.SIMPLE_DATE_FORMAT;
-import static org.nexial.service.domain.utils.Constants.Status.INPROGRESS;
-import static org.nexial.service.domain.utils.Constants.Status.RECEIVED;
+import static org.nexial.service.domain.utils.Constants.Status.*;
 
 @Repository
 public class ApplicationDao {
@@ -48,9 +47,7 @@ public class ApplicationDao {
     @PostConstruct
     public void initialize() {
         try {
-            // Can add both into one properties file
-            properties = ResourceUtils.loadProperties("sqlCreateStatements.properties");
-            properties.putAll(ResourceUtils.loadProperties("sqlQueryStatements.properties"));
+            properties = ResourceUtils.loadProperties("sqlQueryStatements.properties");
             createDatabaseTables();
         } catch (IOException ex) {
             throw new RuntimeException("SQL Query Statement property Not loaded");
@@ -69,13 +66,13 @@ public class ApplicationDao {
         // String logFile = JSONPath.find(jsonData,"nestedExecutions[0].executionLog");
         String executionType = (JSONPath.find(execution, "nestedExecutions[0].planName") == null) ?
                                NEXIAL_EXECUTION_TYPE_SCRIPT : NEXIAL_EXECUTION_TYPE_PLAN;
+
         sqLiteConfig.execute(getSqlStatement("SQL_INSERT_EXECUTION"), executionId, name,
                              location, logFile, executionLog, executionType, prefix, project);
 
         insertExecutionData(execution, executionId);
         insertExecutionMetaData(execution, executionId);
         insertExecutionEnvironmentInfo(execution, executionId);
-
         return executionId;
     }
 
@@ -168,10 +165,6 @@ public class ApplicationDao {
         sqLiteConfig.execute(getSqlStatement("SQL_INSERT_SCHEDULE_INFO"), param);
     }
 
-    public void updateWorkerInterrupt(String projectName, String prefix) {
-        sqLiteConfig.execute(getSqlStatement("SQL_UPDATE_WORKER_INFO"), projectName, prefix);
-    }
-
     public List<Map<String, Object>> getExecutionMetas(Object scopeId, String scopeType) {
         return sqLiteConfig.queryForList(getSqlStatement("SQL_SELECT_EXECUTION_META"),
                                          new Object[]{scopeId, scopeType});
@@ -230,14 +223,8 @@ public class ApplicationDao {
 
     }
 
-    /*public String getWorkerId(String projectName, String prefix) {
+    public String getWorkerId(String projectName, String prefix) {
         return (String) sqLiteConfig.queryForObject(getSqlStatement("SQL_SELECT_WORKER_INFO"),
-                                                    new Object[]{projectName, prefix},
-                                                    String.class);
-    }*/
-
-    public String getWorkerInterrupt(String projectName, String prefix) {
-        return (String) sqLiteConfig.queryForObject(getSqlStatement("SQL_SELECT_WORKER_INTERRUPT"),
                                                     new Object[]{projectName, prefix},
                                                     String.class);
     }
@@ -255,7 +242,8 @@ public class ApplicationDao {
     }
 
     public List<Map<String, Object>> getExecutionSummary() {
-        return sqLiteConfig.queryForList(getSqlStatement("SQL_SELECT_EXECUTION"), new Object[]{project, prefix});
+        return sqLiteConfig.queryForList(getSqlStatement("SQL_SELECT_EXECUTION"),
+                                         new Object[]{project, prefix, FAILED});
     }
 
     public List<Map<String, Object>> getScriptSummaryList(Object executionId) {
