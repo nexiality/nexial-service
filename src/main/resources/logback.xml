@@ -1,58 +1,37 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<configuration debug="true">
-  <conversionRule conversionWord="color" converterClass="org.springframework.boot.logging.logback.ColorConverter"/>
-  <conversionRule conversionWord="resultColor" converterClass="org.nexial.commons.logging.ResultColorConverter"/>
-
-  <statusListener class="ch.qos.logback.core.status.NopStatusListener"/>
-
-  <property name="LOGS" value="./logs"/>
-  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
-    <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
-      <Pattern>%d %p %C{1.} [%t] %m%n</Pattern>
-    </encoder>
-  </appender>
-  <appender name="console-catchall" class="ch.qos.logback.core.ConsoleAppender">
-    <encoder>
-      <pattern>[OTH] %d|%1p|%t|%-25c{3}|%m%n</pattern>
-    </encoder>
-  </appender>
-  <appender name="console-webcontainer" class="ch.qos.logback.core.ConsoleAppender">
-    <encoder>
-      <pattern>[NXL] %color(%d|%-5p|%t|%-25c|%m){yellow}%n</pattern>
-    </encoder>
-  </appender>
+<configuration debug="true" scan="true" scanPeriod="30 seconds" packagingData="true">
+  <property name="LOG_PATH" value="./logs"/>
+  <statusListener class="ch.qos.logback.core.status.OnConsoleStatusListener"/>
   <appender name="RollingFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
-    <file>${LOGS}/service-logger.log</file>
     <encoder
       class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
       <Pattern>%d %p %C{1.} [%t] %m%n</Pattern>
     </encoder>
-
-    <rollingPolicy
-      class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-      <!-- rollover daily and when the file reaches 10 MegaBytes -->
-      <fileNamePattern>${LOGS}/archived/spring-boot-logger-%d{yyyy-MM-dd}.%i.log
-      </fileNamePattern>
-      <timeBasedFileNamingAndTriggeringPolicy
-        class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
-        <maxFileSize>10MB</maxFileSize>
-      </timeBasedFileNamingAndTriggeringPolicy>
+    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+      <fileNamePattern>${LOG_PATH}/nexial-service_%d{yyyy-MM-dd}.log</fileNamePattern>
+      <maxHistory>30</maxHistory>
+      <cleanHistoryOnStart>false</cleanHistoryOnStart>
     </rollingPolicy>
   </appender>
 
   <!-- LOG everything at INFO level -->
   <root level="info">
     <appender-ref ref="RollingFile"/>
-    <appender-ref ref="STDOUT"/>
-    <appender-ref ref="console-catchall"/>
-    <appender-ref ref="console-webcontainer"/>
   </root>
-
+  <logger name="org.springframework" additivity="false" level="WARN">
+    <appender-ref ref="RollingFile"/>
+  </logger>
+  <logger name="org.springframework.web" additivity="false" level="DEBUG">
+    <appender-ref ref="RollingFile"/>
+  </logger>
   <logger name="org.nexial.service" level="info" additivity="false">
     <appender-ref ref="RollingFile"/>
-    <appender-ref ref="STDOUT"/>
-    <appender-ref ref="console-catchall"/>
-    <appender-ref ref="console-webcontainer"/>
+  </logger>
+  <logger name="org.sqlite" additivity="false" level="ERROR">
+    <appender-ref ref="RollingFile"/>
+  </logger>
+  <logger name="org.springframework.jdbc" additivity="false" level="ERROR">
+    <appender-ref ref="RollingFile"/>
   </logger>
 
 </configuration>
