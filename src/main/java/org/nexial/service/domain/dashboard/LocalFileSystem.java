@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.IOException;
 
 import org.apache.commons.lang3.StringUtils;
-import org.jetbrains.annotations.NotNull;
 import org.nexial.service.domain.ApplicationProperties;
 import org.nexial.service.domain.utils.UtilityHelper;
 import org.slf4j.Logger;
@@ -31,7 +30,6 @@ public class LocalFileSystem implements IFileStorage {
     @Override
     public void deleteFolders(String path) { }
 
-    @NotNull
     private String getLocalUrl(File file, String urlPath) {
         try {
             String url = UtilityHelper.getPath(file.getCanonicalPath(), false);
@@ -39,7 +37,7 @@ public class LocalFileSystem implements IFileStorage {
                    StringUtils.substringAfter(url, properties.getArtifactPath());
         } catch (IOException e) {
             logger.error("Unable to find the file - " + file.getAbsolutePath(), e);
-            return file.getAbsolutePath();
+            return null;
         }
     }
 }
