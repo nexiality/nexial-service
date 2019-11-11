@@ -9,6 +9,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.nexial.commons.utils.DateUtility;
 import org.nexial.service.domain.dashboard.service.ProcessRecordService;
+import org.nexial.service.domain.dashboard.service.PurgeExecutionService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.BeanFactory;
@@ -26,7 +27,7 @@ public class ExecutionSummaryScheduler {
         this.beanFactory = beanFactory;
     }
 
-    @Scheduled(fixedRate = 100000)
+    @Scheduled(fixedRate = 60000)
     private void summaryScheduler() {
         //Todo  use Spring functionality and configure through xml
         logger.info("Summary Scheduler called " + DateUtility.format(System.currentTimeMillis()));
@@ -66,5 +67,13 @@ public class ExecutionSummaryScheduler {
                 }
             }
         }
+    }
+
+    @Scheduled(fixedRate = 60000)
+    private void purgeExecution() {
+        logger.info("Purge Scheduler started--- ");
+        System.out.println("Purge Scheduler started--- ");
+        PurgeExecutionService service = beanFactory.getBean(PurgeExecutionService.class);
+        service.autoPurging();
     }
 }

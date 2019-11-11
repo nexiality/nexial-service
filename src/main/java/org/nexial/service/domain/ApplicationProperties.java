@@ -38,4 +38,9 @@ public class ApplicationProperties extends ReloadApplicationProperties {
         return "http://" + environment.getProperty(SERVER_ADDRESS) + ":" +
                environment.getProperty(SERVER_PORT) + PATH_SEPARATOR;
     }
+
+    public int getAutoPurgePeriod() {
+        // handle parse error
+        return Integer.parseInt(environment.getProperty("config.purge.period"));
+    }
 }

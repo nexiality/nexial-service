@@ -25,5 +25,5 @@ hs_err_pid*
 .idea/
 #.idea/modules/*
 .ideaDataSources/
-.idea/libraries/*
-.idea/modules/*
+.idea/libraries/
+.idea/modules/

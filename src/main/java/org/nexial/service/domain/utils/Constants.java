@@ -6,7 +6,11 @@ public final class Constants {
     public static final String SUMMARY_OUTPUT_FILE = "summary_output.json";
     public static final String EXECUTION_DETAIL_JSON = "execution-detail.json";
     public static final String DATE_TIME_FORMAT = "MM/dd/YYYY hh:mm:ss";
+    public static final String DATE_TIME_FORMAT1 = "YYYYMMdd_hhmmss";
     public static final String PATH_SEPARATOR = "/";
+
+    public static final SimpleDateFormat SIMPLE_DATE_FORMAT = new SimpleDateFormat(DATE_TIME_FORMAT);
+    public static final SimpleDateFormat SIMPLE_DATE_FORMAT1 = new SimpleDateFormat(DATE_TIME_FORMAT1);
 
     public static final String TIMESTAMP_REGEX = "^.*(\\d{4})(\\d{2})(\\d{2})_(\\d{2})(\\d{2})(\\d{2})$";
     // external configuration
@@ -46,7 +50,4 @@ public final class Constants {
     public static final String RESULTS = "results";
 
     public static final Long TIME_OUT = 30000L;
-
-    public static final SimpleDateFormat SIMPLE_DATE_FORMAT = new SimpleDateFormat(DATE_TIME_FORMAT);
-
 }

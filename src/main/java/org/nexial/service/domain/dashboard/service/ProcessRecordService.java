@@ -20,7 +20,6 @@ import org.nexial.core.excel.ExcelArea;
 import org.nexial.core.utils.JsonUtils;
 import org.nexial.service.domain.ApplicationProperties;
 import org.nexial.service.domain.dashboard.IFileStorage;
-import org.nexial.service.domain.dashboard.scheduler.StepData;
 import org.nexial.service.domain.dbconfig.ApplicationDao;
 import org.nexial.service.domain.utils.UtilityHelper;
 import org.slf4j.Logger;

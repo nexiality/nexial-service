@@ -16,7 +16,7 @@ import org.nexial.commons.utils.ResourceUtils;
 import org.nexial.core.excel.Excel;
 import org.nexial.core.excel.Excel.Worksheet;
 import org.nexial.core.utils.JSONPath;
-import org.nexial.service.domain.dashboard.scheduler.StepData;
+import org.nexial.service.domain.dashboard.service.StepData;
 import org.nexial.service.domain.utils.Constants.Status;
 import org.nexial.service.domain.utils.UtilityHelper;
 import org.springframework.stereotype.Repository;
@@ -167,7 +167,7 @@ public class ApplicationDao {
 
     public List<Map<String, Object>> getExecutionMetas(Object scopeId, String scopeType) {
         return sqLiteConfig.queryForList(getSqlStatement("SQL_SELECT_EXECUTION_META"),
-                                         new Object[]{scopeId, scopeType});
+                                         scopeId, scopeType);
     }
 
     public String updateWorkerInfo(String threadName) {
@@ -178,7 +178,7 @@ public class ApplicationDao {
 
     public List<Map<String, Object>> getExecutionData(Object scopeId, String scopeType) {
         return sqLiteConfig.queryForList(getSqlStatement("SQL_SELECT_EXECUTION_DATA"),
-                                         new Object[]{scopeId, scopeType});
+                                         scopeId, scopeType);
     }
 
     public void updateScheduleInfoStatus(Status status) {
@@ -207,26 +207,26 @@ public class ApplicationDao {
 
     public List<Map<String, Object>> getRunIds() {
         return sqLiteConfig.queryForList(getSqlStatement("SQL_SELECT_RUN_ID_SCHEDULE_INFO"),
-                                         new Object[]{project, prefix, RECEIVED});
+                                         project, prefix, RECEIVED);
     }
 
     public String getExecutionOutputPath(String runId) {
         return (String) sqLiteConfig.queryForObject(getSqlStatement("SQL_SELECT_OUTPUT_PATH_SCHEDULE_INFO"),
-                                                    new Object[]{runId, RECEIVED},
-                                                    String.class);
+                                                    String.class,
+                                                    new Object[]{runId, RECEIVED});
     }
 
     public int getWorkerCount(String projectName, String prefix) {
         return (int) sqLiteConfig.queryForObject(getSqlStatement("SQL_SELECT_COUNT_WORKER_INFO"),
-                                                 new Object[]{projectName, prefix},
-                                                 Integer.class);
+                                                 Integer.class,
+                                                 new Object[]{projectName, prefix});
 
     }
 
     public String getWorkerId(String projectName, String prefix) {
         return (String) sqLiteConfig.queryForObject(getSqlStatement("SQL_SELECT_WORKER_INFO"),
-                                                    new Object[]{projectName, prefix},
-                                                    String.class);
+                                                    String.class,
+                                                    new Object[]{projectName, prefix});
     }
 
     private void insertLogInfo(String stepId, StepData steps) {
@@ -243,15 +243,15 @@ public class ApplicationDao {
 
     public List<Map<String, Object>> getExecutionSummary() {
         return sqLiteConfig.queryForList(getSqlStatement("SQL_SELECT_EXECUTION"),
-                                         new Object[]{project, prefix, FAILED});
+                                         project, prefix, FAILED);
     }
 
     public List<Map<String, Object>> getScriptSummaryList(Object executionId) {
-        return sqLiteConfig.queryForList(getSqlStatement("SQL_SELECT_SCRIPT"), new Object[]{executionId});
+        return sqLiteConfig.queryForList(getSqlStatement("SQL_SELECT_SCRIPT"), executionId);
     }
 
     public List<Map<String, Object>> getIterationList(Object scriptId) {
-        return sqLiteConfig.queryForList(getSqlStatement("SQL_SELECT_ITERATION"), new Object[]{scriptId});
+        return sqLiteConfig.queryForList(getSqlStatement("SQL_SELECT_ITERATION"), scriptId);
     }
 
     private void insertExecutionData(JSONObject json, String scopeId) {
@@ -274,17 +274,13 @@ public class ApplicationDao {
     }
 
     public List<Map<String, Object>> getReceivedProjects() {
-        return sqLiteConfig.queryForList(getSqlStatement("SQL_SELECT_SCHEDULE_INFO"), new Object[]{RECEIVED});
+        return sqLiteConfig.queryForList(getSqlStatement("SQL_SELECT_SCHEDULE_INFO"), RECEIVED);
     }
 
     private String generateId() { return RandomStringUtils.randomAlphanumeric(ID_LENGTH); }
 
-    private void createDatabaseTables() {
-        properties.forEach((key, value) -> {
-            if (!StringUtils.startsWith((String) key, "SQL_CREATE")) { return; }
-            System.out.println((String) key);
-            sqLiteConfig.execute((String) value);
-        });
+    public List<Map<String, Object>> getScheduleInfo() {
+        return sqLiteConfig.queryForList(getSqlStatement("SQL_SELECT_SCHEDULE_INFO_DATES"));
     }
 
     private String getSqlStatement(String sqlStatement) { return properties.getProperty(sqlStatement); }
@@ -295,5 +291,26 @@ public class ApplicationDao {
                              id, execution.get("runHost"), execution.get("runUser"),
                              execution.get("runHostOs"), EMPTY, EMPTY, EMPTY, EMPTY, executionId);
         return id;
+    }
+
+    public List<Map<String, Object>> getScheduleInfoWithRunId(String runId) {
+        return sqLiteConfig.queryForList(getSqlStatement("SQL_SELECT_SCHEDULE_INFO_RUNID"), runId);
+    }
+
+    public void deleteExecutionDetails(String project, String name) {
+        sqLiteConfig.execute(getSqlStatement("SQL_DELETE_EXECUTION"), project, name);
+    }
+
+    public void deleteScheduleInfoDetails(String id) {
+        sqLiteConfig.execute(getSqlStatement("SQL_DELETE_SCHEDULE_INFO"), id);
+    }
+
+    private void createDatabaseTables() {
+        sqLiteConfig.execute(getSqlStatement("SQL_ENFORCE_FOREIGN_KEYS"));
+        properties.forEach((key, value) -> {
+            if (!StringUtils.startsWith((String) key, "SQL_CREATE")) { return; }
+            System.out.println((String) key);
+            sqLiteConfig.execute((String) value);
+        });
     }
 }

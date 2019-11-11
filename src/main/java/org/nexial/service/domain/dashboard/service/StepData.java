@@ -1,4 +1,4 @@
-package org.nexial.service.domain.dashboard.scheduler;
+package org.nexial.service.domain.dashboard.service;
 
 import java.util.List;
 

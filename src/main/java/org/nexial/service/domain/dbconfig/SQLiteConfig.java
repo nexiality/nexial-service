@@ -16,11 +16,11 @@ public class SQLiteConfig {
 
     public void setDataSource(DataSource dataSource) { this.dataSource = dataSource; }
 
-    List<Map<String, Object>> queryForList(String sql, Object[] params) {
+    List<Map<String, Object>> queryForList(String sql, Object... params) {
         return jdbcTemplate.queryForList(sql, params);
     }
 
-    Object queryForObject(String sql, Object[] params, Class requiredClass) {
+    Object queryForObject(String sql, Class requiredClass, Object... params) {
         return jdbcTemplate.queryForObject(sql, params, requiredClass);
     }
 
