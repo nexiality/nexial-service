@@ -1,6 +1,7 @@
 package org.nexial.service.domain.dbconfig;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -35,7 +36,6 @@ public class ApplicationDao {
     private String project;
     private String prefix;
     private final SQLiteConfig sqLiteConfig;
-
     private Properties properties;
 
     public ApplicationDao(SQLiteConfig sqLiteConfig) { this.sqLiteConfig = sqLiteConfig; }
@@ -52,6 +52,40 @@ public class ApplicationDao {
         } catch (IOException ex) {
             throw new RuntimeException("SQL Query Statement property Not loaded");
         }
+    }
+
+    public void deleteExecutionData(String scheduleInfoId, String project, String name) {
+        List<String> list = new ArrayList<>();
+        String executionId = (String) sqLiteConfig.queryForObject(getSqlStatement("SQL_SELECT_EXECUTION_ID"),
+                                                                  String.class, project, name);
+        list.add(executionId);
+        List<Map<String, Object>> scripts = sqLiteConfig.queryForList(getSqlStatement("SQL_SELECT_SCRIPT"),
+                                                                      executionId);
+        scripts.forEach(row -> {
+            String scriptId = (String) row.get("Id");
+            list.add(scriptId);
+            List<Map<String, Object>> iterations = sqLiteConfig.queryForList(getSqlStatement("SQL_SELECT_ITERATION"),
+                                                                             scriptId);
+            iterations.forEach(row1 -> {
+                String iterationId = (String) row1.get("Id");
+                list.add(iterationId);
+                List<Map<String, Object>> scenarios = sqLiteConfig.queryForList(getSqlStatement("SQL_SELECT_SCENARIO"),
+                                                                                iterationId);
+                scenarios.forEach(row2 -> {
+                    String scenarioId = (String) row2.get("Id");
+                    list.add(scenarioId);
+                    List<Map<String, Object>> activities = sqLiteConfig.queryForList(getSqlStatement(
+                        "SQL_SELECT_ACTIVITY"), scenarioId);
+                    activities.forEach(row3 -> list.add((String) row3.get("Id")));
+                });
+            });
+        });
+        list.forEach(id -> {
+            sqLiteConfig.execute(getSqlStatement("SQL_DELETE_EXECUTION_DATA"), id);
+            sqLiteConfig.execute(getSqlStatement("SQL_DELETE_EXECUTIONMETA_DATA"), id);
+        });
+        sqLiteConfig.execute(getSqlStatement("SQL_DELETE_SCHEDULE_INFO"), scheduleInfoId);
+        sqLiteConfig.execute(getSqlStatement("SQL_DELETE_EXECUTION"), project, name);
     }
 
     public String insertExecutionInfo(JSONObject execution) {
@@ -295,14 +329,6 @@ public class ApplicationDao {
 
     public List<Map<String, Object>> getScheduleInfoWithRunId(String runId) {
         return sqLiteConfig.queryForList(getSqlStatement("SQL_SELECT_SCHEDULE_INFO_RUNID"), runId);
-    }
-
-    public void deleteExecutionDetails(String project, String name) {
-        sqLiteConfig.execute(getSqlStatement("SQL_DELETE_EXECUTION"), project, name);
-    }
-
-    public void deleteScheduleInfoDetails(String id) {
-        sqLiteConfig.execute(getSqlStatement("SQL_DELETE_SCHEDULE_INFO"), id);
     }
 
     private void createDatabaseTables() {

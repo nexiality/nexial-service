@@ -3,18 +3,16 @@ package org.nexial.service.domain.dbconfig;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Resource;
-import javax.sql.DataSource;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 
 public class SQLiteConfig {
     @Resource
     private JdbcTemplate jdbcTemplate;
-    private DataSource dataSource;
 
-    public DataSource getDataSource() { return dataSource; }
+    public JdbcTemplate getJdbcTemplate() { return jdbcTemplate; }
 
-    public void setDataSource(DataSource dataSource) { this.dataSource = dataSource; }
+    public void setJdbcTemplate(JdbcTemplate jdbcTemplate) { this.jdbcTemplate = jdbcTemplate; }
 
     List<Map<String, Object>> queryForList(String sql, Object... params) {
         return jdbcTemplate.queryForList(sql, params);

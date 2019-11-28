@@ -211,7 +211,9 @@ public class ProcessRecordService {
         }
     }
 
-    private void createSummaryOutput() {
+    public void createSummaryOutput() {
+        dao.setProject(project);
+        dao.setPrefix(prefix);
         JSONArray executionJSONArray = new JSONArray();
         List<Map<String, Object>> executionList = dao.getExecutionSummary();
         executionList.sort(Comparator.comparing(row -> StringUtils.substringAfter(row.get("name").toString(), ".")));

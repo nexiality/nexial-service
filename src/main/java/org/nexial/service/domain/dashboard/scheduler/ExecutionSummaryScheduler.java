@@ -72,7 +72,6 @@ public class ExecutionSummaryScheduler {
     @Scheduled(fixedRate = 60000)
     private void purgeExecution() {
         logger.info("Purge Scheduler started--- ");
-        System.out.println("Purge Scheduler started--- ");
         PurgeExecutionService service = beanFactory.getBean(PurgeExecutionService.class);
         service.autoPurging();
     }

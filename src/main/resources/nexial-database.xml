@@ -22,12 +22,14 @@
        default-lazy-init="true">
 
   <bean id="sqliteConfig" class="org.nexial.service.domain.dbconfig.SQLiteConfig">
-    <property name="dataSource" ref="dataSource"></property>
+      <property name="jdbcTemplate" ref="jdbcTemplate"></property>
   </bean>
-  <bean id="jdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate">
+
+    <bean id="jdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate">
     <constructor-arg index="0" ref="dataSource"/>
   </bean>
-  <bean id="threadPoolTaskExecutor" class="org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor">
+
+    <bean id="threadPoolTaskExecutor" class="org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor">
     <property name="corePoolSize" value="5"/>
     <property name="maxPoolSize" value="10"/>
     <property name="WaitForTasksToCompleteOnShutdown" value="false"/>

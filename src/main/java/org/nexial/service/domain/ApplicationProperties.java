@@ -39,8 +39,8 @@ public class ApplicationProperties extends ReloadApplicationProperties {
                environment.getProperty(SERVER_PORT) + PATH_SEPARATOR;
     }
 
-    public int getAutoPurgePeriod() {
+    public Float getAutoPurgePeriod() {
         // handle parse error
-        return Integer.parseInt(environment.getProperty("config.purge.period"));
+        return Float.parseFloat(environment.getProperty("config.purge.period"));
     }
 }
