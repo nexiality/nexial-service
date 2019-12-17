@@ -1,0 +1,297 @@
+<html xmlns="http://www.w3.org/1999/html">
+<head>
+    <script>
+        var loadErrorFound = false;
+
+        function externalResourceNotFound() {
+            if (!loadErrorFound) {
+                window.alert("Unable to load one or more external web resources needed to display this page.\n\n" +
+                             "Please check/adjust your Internet access and reload this page again.\n\n" +
+                             "Thank you.");
+                loadErrorFound = true;
+            }
+            return false;
+        }
+    </script>
+    <link href="https://use.fontawesome.com/releases/v5.6.1/css/all.css" onerror="externalResourceNotFound()"
+          rel="stylesheet"/>
+    <link href="https://nexiality.github.io/documentation/assets/report/execution_summary.css"
+          onerror="externalResourceNotFound()" rel="stylesheet"/>
+    <!--<link rel="stylesheet" href="execution_summary.css" onerror="externalResourceNotFound()"/>-->
+    <script onerror="externalResourceNotFound()"
+            src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script onerror="externalResourceNotFound()"
+            src="https://nexiality.github.io/documentation/assets/report/execution_summary.js"></script>
+    <!--<script src="execution_summary.js" onerror="externalResourceNotFound()"></script>-->
+</head>
+<body>
+
+<div class="title">
+    Execution Summary for <span>20191029_144728</span>
+</div>
+
+<div class="result-controls">
+    <i class="fas fa-toggle-on on" id="script-toggle" onclick="toggleScript(this)"
+       title="toggle the display of only scripts"><span>Scripts</span></i>
+    <i class="fas fa-toggle-on on" id="iteration-toggle" onclick="toggleIteration(this)"
+       title="toggle the display of iterations"><span>Iterations</span></i>
+    <i class="fas fa-toggle-on on" id="scenario-toggle" onclick="toggleScenario(this)"
+       title="toggle the display of scenarios"><span>Scenarios</span></i>
+    <i class="fas fa-toggle-on on" id="activity-toggle" onclick="toggleActivity(this)"
+       title="toggle the display of activities"><span>Activities</span></i>
+    <i class="fas fa-toggle-on on" id="reference-toggle" onclick="toggleRefs(this);"
+       title="toggle the display of script/scenario references"><span>References</span></i>
+    &nbsp;|&nbsp;&nbsp;
+    <i class="fas fa-exclamation-circle off" id="failure-toggle" onclick="collapsePassRows(this);"><span>Failures</span></i>
+    <i class="fas fa-check-circle on" id="all-toggle" onclick="showPassRows(this);"><span>All Results</span></i>
+    &nbsp;|&nbsp;&nbsp;
+    <i class="fas fa-compress on" id="collapse-toggle" onclick="toggleExpansion(this)"
+       title="collapse/expand all sections"><span>Collapse/Expand All</span></i>
+</div>
+
+
+<div class="execMeta canHide">
+    <div class="showhide" target="execMeta">
+        <i class="fas fa-minus-square" onclick="hideSection(this)" title="minimize this section"></i>
+        <i class="fas fa-plus-square" onclick="showSection(this)" title="restore this section"></i>
+    </div>
+
+    <table cellpadding="4" cellspacing="3" class="execMeta" id="execMeta">
+        <tbody>
+        <tr>
+            <td class="execLabel" nowrap="nowrap">run from</td>
+            <th class="execValue" width="100%">CWVSFT525 (amd64 Windows 10 10.0)
+            </th>
+        </tr>
+        <tr>
+            <td class="execLabel" nowrap="nowrap">run user</td>
+            <th class="execValue">ak093674
+            </th>
+        </tr>
+        <tr>
+            <td class="execLabel" nowrap="nowrap">time span</td>
+            <th class="execValue">10/29/2019 14:47:28 - 10/29/2019 14:48:07
+            </th>
+        </tr>
+        <tr>
+            <td class="execLabel" nowrap="nowrap">duration</td>
+            <th class="execValue">00:00:38.609
+            </th>
+        </tr>
+        <tr>
+            <td class="execLabel" nowrap="nowrap">scenario passed</td>
+            <th class="execValue">0 / 1
+            </th>
+        </tr>
+        <tr>
+            <td class="execLabel" nowrap="nowrap">total steps</td>
+            <th class="execValue"><pre>   7
+</pre>
+            </th>
+        </tr>
+        <tr>
+            <td class="execLabel" nowrap="nowrap">executed steps</td>
+            <th class="execValue"><pre>   7 (100.00%)
+</pre>
+            </th>
+        </tr>
+        <tr>
+            <td class="execLabel" nowrap="nowrap">passed</td>
+            <th class="execValue"><pre>   2 (28.57%)
+</pre>
+            </th>
+        </tr>
+        <tr>
+            <td class="execLabel" nowrap="nowrap">failed</td>
+            <th class="execValue execValueFail"><pre>   5 (71.43%)
+</pre>
+            </th>
+        </tr>
+        <tr>
+            <td class="execLabel" nowrap="nowrap">nexial version</td>
+            <th class="execValue">nexial-DEV</th>
+        </tr>
+        <tr>
+            <td class="execLabel" nowrap="nowrap">java version</td>
+            <th class="execValue">1.8.0_221</th>
+        </tr>
+        <tr>
+            <td class="execLabel" nowrap="nowrap">log</td>
+            <th class="execValue execLog">
+
+                <a href="http://localhost:8099/download/NotepadTest/20191029_144728/logs/nexial-20191029_144728.log"
+                   target="_nexial_link">nexial-20191029_144728.log</a><br/>
+
+                <a href="http://localhost:8099/download/NotepadTest/20191029_144728/logs/notepad.20191029_144732.001.xlsx_Scenario_A10.log"
+                   target="_nexial_link">notepad.20191029_144732.001.xlsx_Scenario_A10.log</a><br/>
+
+                <a href="http://localhost:8099/download/NotepadTest/20191029_144728/logs/notepad.20191029_144732.001.xlsx_Scenario_A11.log"
+                   target="_nexial_link">notepad.20191029_144732.001.xlsx_Scenario_A11.log</a><br/>
+
+                <a href="http://localhost:8099/download/NotepadTest/20191029_144728/logs/notepad.20191029_144732.001.xlsx_Scenario_A12.log"
+                   target="_nexial_link">notepad.20191029_144732.001.xlsx_Scenario_A12.log</a><br/>
+
+                <a href="http://localhost:8099/download/NotepadTest/20191029_144728/logs/notepad.20191029_144732.001.xlsx_Scenario_A13.log"
+                   target="_nexial_link">notepad.20191029_144732.001.xlsx_Scenario_A13.log</a><br/>
+
+                <a href="http://localhost:8099/download/NotepadTest/20191029_144728/logs/notepad.20191029_144732.001.xlsx_Scenario_A8.log"
+                   target="_nexial_link">notepad.20191029_144732.001.xlsx_Scenario_A8.log</a><br/>
+
+            </th>
+        </tr>
+        <tr>
+            <td class="execLabel" nowrap="nowrap">runtime args</td>
+            <th class="execValue">-script C:\projects\NotepadTest\artifact\script\notepad.xlsx</th>
+        </tr>
+        <tr>
+            <td class="execLabel" nowrap="nowrap">JAVA_OPT</td>
+            <th class="execValue">-Dnexial.enableEmail=false,-Dnexial.outputToCloud=true,-Dnexial.openResult=false</th>
+        </tr>
+
+        </tbody>
+    </table>
+</div>
+
+
+<div class="exec-summary">
+
+
+    <div class="exec-summary-header">
+        <table border="0" cellpadding="5" cellspacing="0" width="100%">
+            <tr>
+                <th class="label label-title">Script</th>
+                <th class="label label-title">Data</th>
+                <th class="label label-iteration">Iterations</th>
+                <th class="label label-scenarioPassed">Scenario Passed</th>
+                <th class="label label-datetime">Start Date/Time</th>
+                <th class="label label-time">Duration</th>
+                <th class="label label-num">Total</th>
+                <th class="label label-num">Pass</th>
+                <th class="label label-num">Fail</th>
+                <th class="label label-percent" width="100%">Success %</th>
+            </tr>
+        </table>
+    </div>
+    <div class="planStep canHide" id="planStep1">
+        <div class="showhide" target="planStep1details">
+            <i class="fas fa-minus-square" onclick="hideSection(this)" title="minimize this section"></i>
+            <i class="fas fa-plus-square" onclick="showSection(this)" title="restore this section"></i>
+        </div>
+
+        <div class="plan-step-summary">
+            <table border="0" cellpadding="5" cellspacing="0">
+                <tr class="hasFailure">
+                    <td class="value value-title">
+                        <a href="C:\projects\NotepadTest\artifact\script\notepad.xlsx">notepad.xlsx</a>
+                    </td>
+                    <td class="value value-title" title="notepad.data.xlsx">
+                        <a href="C:\projects\NotepadTest\artifact\data\notepad.data.xlsx">notepad.data.xlsx</a>
+                    </td>
+                    <td class="value value-iteration">1</td>
+                    <td class="value value-scenarioPassed">0 / 1</td>
+                    <td class="value value-datetime">2019/10/29 14:47:32</td>
+                    <td class="value value-time value-tally">00:00:32</td>
+                    <td class="value value-num value-tally">7</td>
+                    <td class="value value-num value-tally">2</td>
+                    <td class="value value-num value-tally">5</td>
+                    <td class="value value-percent value-tally hasFailure">28.57%</td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="iteration canHide" id="planStep1details">
+            <table border="0" cellpadding="5" cellspacing="0">
+                <tr class="record-header">
+                    <th class="label label-title">Iteration</th>
+                    <th class="label label-title">Scenario</th>
+                    <th class="label label-title">Activity</th>
+                    <th class="label label-scenarioPassed"></th>
+                    <th class="label label-datetime">Start Date/Time</th>
+                    <th class="label label-time">Duration</th>
+                    <th class="label label-num">Total</th>
+                    <th class="label label-num">Pass</th>
+                    <th class="label label-num">Fail</th>
+                    <th class="label label-num">Success %</th>
+                    <th class="label">&nbsp;</th>
+                </tr>
+
+
+                <tr class="record iter hasFailure">
+                    <td class="value value-title" colspan="3" title="1 of 1">
+                        <a href="http://localhost:8099/download/NotepadTest/20191029_144728/notepad.20191029_144732.001.xlsx"
+                           target="_nexial_link">Execution Result (1 of 1)</a>
+                        <div class="value-scriptRef">
+                            <i class="fas fa-info-circle info" title="Reference Data labeled as nexial.scriptRef.*"></i>
+                            <table cellpadding="0" cellspacing="0">
+
+
+                                <tr>
+                                    <td class="label-ref" title="DataSheet(s)">DataSheet(s)</td>
+                                    <td class="value-ref" title="#default">#default</td>
+                                </tr>
+
+
+                            </table>
+                        </div>
+                    </td>
+                    <td class="value value-scenarioPassed">0 / 1</td>
+                    <td class="value value-datetime">2019/10/29 14:47:32</td>
+                    <td class="value value-time value-tally">00:00:30</td>
+                    <td class="value value-num value-tally">7</td>
+                    <td class="value value-num value-tally">2</td>
+                    <td class="value value-num value-tally">5</td>
+                    <td class="value value-percent value-tally  hasFailure">28.57%</td>
+                </tr>
+
+
+                <tr class="record scenario hasFailure">
+                    <td class="value spacer2">&nbsp;</td>
+                    <td class="value value-title" colspan="3" title="Scenario">
+                        Scenario
+
+                    </td>
+                    <td class="value value-datetime">2019/10/29 14:47:36</td>
+                    <td class="value value-time value-tally">00:00:25</td>
+                    <td class="value value-num value-tally">7</td>
+                    <td class="value value-num value-tally">2</td>
+                    <td class="value value-num value-tally">5</td>
+                    <td class="value value-percent value-tally hasFailure">28.57%</td>
+                </tr>
+
+
+                <tr class="record activity hasFailure">
+                    <td class="value spacer2" colspan="2"></td>
+                    <td class="value value-title" colspan="2" title="TestCase1">TestCase1</td>
+                    <td class="value value-datetime">2019/10/29 14:47:36</td>
+                    <td class="value value-time">00:00:25</td>
+                    <td class="value value-num">7</td>
+                    <td class="value value-num">2</td>
+                    <td class="value value-num">5</td>
+                    <td class="value value-percent hasFailure">28.57%</td>
+                </tr>
+
+
+            </table>
+        </div>
+    </div>
+</div>
+
+
+<br/>
+<br/>
+<br/>
+<br/>
+<div class="footer">powered by <a href="https://nexiality.github.io">NEXIAL</a></div>
+<br/>
+<br/>
+
+<div id="loadError"
+     style="display:none;font-weight:bold;font-size:16pt;color:#800;background:rgba(230,200,200,0.9);border:5px solid;padding:25px;margin:auto;position:fixed;width:500px;height:175px;top:0;left:0;right:0;bottom:0;">
+    Unable to load one or more external web resources needed to display this page.<br/><br/>
+    Please check/adjust your Internet access and reload this page again.<br/><br/>
+    Thank you.
+</div>
+<script>if (loadErrorFound) { document.getElementById('loadError').style.display = 'block'; }</script>
+
+</body>
+</html>

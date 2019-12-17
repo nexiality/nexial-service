@@ -5,6 +5,7 @@ import java.util.Map;
 import javax.annotation.Resource;
 
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.transaction.annotation.Transactional;
 
 public class SQLiteConfig {
     @Resource
@@ -14,13 +15,14 @@ public class SQLiteConfig {
 
     public void setJdbcTemplate(JdbcTemplate jdbcTemplate) { this.jdbcTemplate = jdbcTemplate; }
 
-    List<Map<String, Object>> queryForList(String sql, Object... params) {
+    public List<Map<String, Object>> queryForList(String sql, Object... params) {
         return jdbcTemplate.queryForList(sql, params);
     }
 
-    Object queryForObject(String sql, Class requiredClass, Object... params) {
+    public Object queryForObject(String sql, Class requiredClass, Object... params) {
         return jdbcTemplate.queryForObject(sql, params, requiredClass);
     }
 
+    @Transactional
     void execute(String sql, Object... params) { jdbcTemplate.update(sql, params); }
 }

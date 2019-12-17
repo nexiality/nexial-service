@@ -1,0 +1,160 @@
+{
+    "name": "20191029_144728",
+    "executionLevel": "EXECUTION",
+    "runHost": "CWVSFT525",
+    "runHostOs": "amd64 Windows 10 10.0",
+    "runUser": "ak093674",
+    "startTime": 1572340648720,
+    "endTime": 1572340687329,
+    "totalLevelPassed": 0,
+    "totalSteps": 7,
+    "passCount": 2,
+    "failCount": 5,
+    "warnCount": 0,
+    "executed": 7,
+    "failedFast": false,
+    "logs": {
+        "nexial-20191029_144728.log": "http://localhost:8099/download/NotepadTest/20191029_144728/logs/nexial-20191029_144728.log",
+        "notepad.20191029_144732.001.xlsx_Scenario_A10.log": "http://localhost:8099/download/NotepadTest/20191029_144728/logs/notepad.20191029_144732.001.xlsx_Scenario_A10.log",
+        "notepad.20191029_144732.001.xlsx_Scenario_A11.log": "http://localhost:8099/download/NotepadTest/20191029_144728/logs/notepad.20191029_144732.001.xlsx_Scenario_A11.log",
+        "notepad.20191029_144732.001.xlsx_Scenario_A12.log": "http://localhost:8099/download/NotepadTest/20191029_144728/logs/notepad.20191029_144732.001.xlsx_Scenario_A12.log",
+        "notepad.20191029_144732.001.xlsx_Scenario_A13.log": "http://localhost:8099/download/NotepadTest/20191029_144728/logs/notepad.20191029_144732.001.xlsx_Scenario_A13.log",
+        "notepad.20191029_144732.001.xlsx_Scenario_A8.log": "http://localhost:8099/download/NotepadTest/20191029_144728/logs/notepad.20191029_144732.001.xlsx_Scenario_A8.log"
+    },
+    "referenceData": {
+        "Data File": "notepad.data.xlsx",
+        "DataSheet(s)": "#default",
+        "JAVA_OPT": "-Dnexial.enableEmail=false,-Dnexial.outputToCloud=true,-Dnexial.openResult=false",
+        "runtime args": "-script C:\\projects\\NotepadTest\\artifact\\script\\notepad.xlsx"
+    },
+    "nestedExecutions": [
+        {
+            "name": "notepad (1)",
+            "executionLevel": "SCRIPT",
+            "scriptFile": "C:\\projects\\NotepadTest\\artifact\\script\\notepad.xlsx",
+            "dataFile": "C:\\projects\\NotepadTest\\artifact\\data\\notepad.data.xlsx",
+            "runHost": "CWVSFT525",
+            "runHostOs": "amd64 Windows 10 10.0",
+            "runUser": "ak093674",
+            "startTime": 1572340652640,
+            "endTime": 1572340685480,
+            "totalLevelPassed": 0,
+            "totalSteps": 7,
+            "passCount": 2,
+            "failCount": 5,
+            "warnCount": 0,
+            "executed": 7,
+            "failedFast": false,
+            "executionLog": "http://localhost:8099/download/NotepadTest/20191029_144728/logs/nexial-20191029_144728.log",
+            "logs": {
+                "nexial-20191029_144728.log": "http://localhost:8099/download/NotepadTest/20191029_144728/logs/nexial-20191029_144728.log",
+                "notepad.20191029_144732.001.xlsx_Scenario_A10.log": "http://localhost:8099/download/NotepadTest/20191029_144728/logs/notepad.20191029_144732.001.xlsx_Scenario_A10.log",
+                "notepad.20191029_144732.001.xlsx_Scenario_A11.log": "http://localhost:8099/download/NotepadTest/20191029_144728/logs/notepad.20191029_144732.001.xlsx_Scenario_A11.log",
+                "notepad.20191029_144732.001.xlsx_Scenario_A12.log": "http://localhost:8099/download/NotepadTest/20191029_144728/logs/notepad.20191029_144732.001.xlsx_Scenario_A12.log",
+                "notepad.20191029_144732.001.xlsx_Scenario_A13.log": "http://localhost:8099/download/NotepadTest/20191029_144728/logs/notepad.20191029_144732.001.xlsx_Scenario_A13.log",
+                "notepad.20191029_144732.001.xlsx_Scenario_A8.log": "http://localhost:8099/download/NotepadTest/20191029_144728/logs/notepad.20191029_144732.001.xlsx_Scenario_A8.log"
+            },
+            "referenceData": { },
+            "nestedExecutions": [
+                {
+                    "name": "1 of 1",
+                    "executionLevel": "ITERATION",
+                    "scriptFile": "C:\\projects\\NotepadTest\\artifact\\script\\notepad.xlsx",
+                    "testScriptLink": "http://localhost:8099/download/NotepadTest/20191029_144728/notepad.20191029_144732.001.xlsx",
+                    "runHost": "CWVSFT525",
+                    "runHostOs": "amd64 Windows 10 10.0",
+                    "runUser": "ak093674",
+                    "startTime": 1572340652646,
+                    "endTime": 1572340683524,
+                    "totalLevelPassed": 0,
+                    "totalSteps": 7,
+                    "passCount": 2,
+                    "failCount": 5,
+                    "warnCount": 0,
+                    "executed": 7,
+                    "failedFast": false,
+                    "executionLog": "C:\\projects\\NotepadTest\\output\\20191029_144728\\logs\\nexial-20191029_144728.log",
+                    "logs": {
+                        "nexial-20191029_144728.log": "C:\\projects\\NotepadTest\\output\\20191029_144728\\logs\\nexial-20191029_144728.log",
+                        "notepad.20191029_144732.001.xlsx_Scenario_A10.log": "C:\\projects\\NotepadTest\\output\\20191029_144728\\logs\\notepad.20191029_144732.001.xlsx_Scenario_A10.log",
+                        "notepad.20191029_144732.001.xlsx_Scenario_A11.log": "C:\\projects\\NotepadTest\\output\\20191029_144728\\logs\\notepad.20191029_144732.001.xlsx_Scenario_A11.log",
+                        "notepad.20191029_144732.001.xlsx_Scenario_A12.log": "C:\\projects\\NotepadTest\\output\\20191029_144728\\logs\\notepad.20191029_144732.001.xlsx_Scenario_A12.log",
+                        "notepad.20191029_144732.001.xlsx_Scenario_A13.log": "C:\\projects\\NotepadTest\\output\\20191029_144728\\logs\\notepad.20191029_144732.001.xlsx_Scenario_A13.log",
+                        "notepad.20191029_144732.001.xlsx_Scenario_A8.log": "C:\\projects\\NotepadTest\\output\\20191029_144728\\logs\\notepad.20191029_144732.001.xlsx_Scenario_A8.log"
+                    },
+                    "referenceData": {
+                        "Data File": "notepad.data.xlsx",
+                        "DataSheet(s)": "#default",
+                        "JAVA_OPT": "-Dnexial.enableEmail=false,-Dnexial.outputToCloud=true,-Dnexial.openResult=false",
+                        "runtime args": "-script C:\\projects\\NotepadTest\\artifact\\script\\notepad.xlsx"
+                    },
+                    "nestedExecutions": [
+                        {
+                            "name": "Scenario",
+                            "executionLevel": "SCENARIO",
+                            "runHost": "CWVSFT525",
+                            "runHostOs": "amd64 Windows 10 10.0",
+                            "runUser": "ak093674",
+                            "startTime": 1572340656768,
+                            "endTime": 1572340682493,
+                            "totalLevelPassed": 0,
+                            "totalSteps": 7,
+                            "passCount": 2,
+                            "failCount": 5,
+                            "warnCount": 0,
+                            "executed": 7,
+                            "failedFast": false,
+                            "executionLog": "C:\\projects\\NotepadTest\\output\\20191029_144728\\logs\\nexial-20191029_144728.log",
+                            "logs": {
+                                "nexial-20191029_144728.log": "C:\\projects\\NotepadTest\\output\\20191029_144728\\logs\\nexial-20191029_144728.log",
+                                "notepad.20191029_144732.001.xlsx_Scenario_A10.log": "C:\\projects\\NotepadTest\\output\\20191029_144728\\logs\\notepad.20191029_144732.001.xlsx_Scenario_A10.log",
+                                "notepad.20191029_144732.001.xlsx_Scenario_A11.log": "C:\\projects\\NotepadTest\\output\\20191029_144728\\logs\\notepad.20191029_144732.001.xlsx_Scenario_A11.log",
+                                "notepad.20191029_144732.001.xlsx_Scenario_A12.log": "C:\\projects\\NotepadTest\\output\\20191029_144728\\logs\\notepad.20191029_144732.001.xlsx_Scenario_A12.log",
+                                "notepad.20191029_144732.001.xlsx_Scenario_A13.log": "C:\\projects\\NotepadTest\\output\\20191029_144728\\logs\\notepad.20191029_144732.001.xlsx_Scenario_A13.log",
+                                "notepad.20191029_144732.001.xlsx_Scenario_A8.log": "C:\\projects\\NotepadTest\\output\\20191029_144728\\logs\\notepad.20191029_144732.001.xlsx_Scenario_A8.log"
+                            },
+                            "referenceData": { },
+                            "nestedExecutions": [
+                                {
+                                    "name": "TestCase1",
+                                    "executionLevel": "ACTIVITY",
+                                    "runHost": "CWVSFT525",
+                                    "runHostOs": "amd64 Windows 10 10.0",
+                                    "runUser": "ak093674",
+                                    "startTime": 1572340656769,
+                                    "endTime": 1572340682493,
+                                    "totalLevelPassed": 0,
+                                    "totalSteps": 7,
+                                    "passCount": 2,
+                                    "failCount": 5,
+                                    "warnCount": 0,
+                                    "executed": 7,
+                                    "failedFast": false,
+                                    "logs": { },
+                                    "referenceData": { },
+                                    "nestedExecutions": [ ],
+                                    "planSequence": 0,
+                                    "iterationIndex": 0,
+                                    "iterationTotal": 0
+                                }
+                            ],
+                            "planSequence": 0,
+                            "iterationIndex": 0,
+                            "iterationTotal": 0
+                        }
+                    ],
+                    "planSequence": 0,
+                    "iterationIndex": 1,
+                    "iterationTotal": 1
+                }
+            ],
+            "planSequence": 0,
+            "iterationIndex": 0,
+            "iterationTotal": 1,
+            "planDescription": "Started on 10/29/2019 02:47:24 PM from CWVSFT525 via user ak093674"
+        }
+    ],
+    "planSequence": 0,
+    "iterationIndex": 0,
+    "iterationTotal": 0
+}

@@ -9,6 +9,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.nexial.commons.utils.DateUtility;
 import org.nexial.service.domain.dashboard.service.ProcessRecordService;
+import org.nexial.service.domain.dashboard.service.ProjectMeta;
 import org.nexial.service.domain.dashboard.service.PurgeExecutionService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,44 +33,45 @@ public class ExecutionSummaryScheduler {
         //Todo  use Spring functionality and configure through xml
         logger.info("Summary Scheduler called " + DateUtility.format(System.currentTimeMillis()));
         List<Map<String, Object>> projectList = beanFactory.getBean(ProcessRecordService.class).getReceivedProjects();
-        Map<ProcessRecordService, CompletableFuture<Boolean>> completableFutures = new ConcurrentHashMap<>();
+        Map<ProjectMeta, CompletableFuture<Boolean>> completableFutures = new ConcurrentHashMap<>();
 
         for (Map<String, Object> row : projectList) {
             //check whether there is a worker thread is present or not if yes dont add those project/prefix
             ProcessRecordService processRecordService = beanFactory.getBean(ProcessRecordService.class);
-            String projectName = (String) row.get("ProjectName");
+            String project = (String) row.get("ProjectName");
             String prefix = (String) row.get("Prefix");
-            processRecordService.setProject(projectName);
-            processRecordService.setPrefix(prefix);
-            processRecordService.setStartTime(System.currentTimeMillis());
-            int count = processRecordService.getWorkerCount();
+            long startTime = System.currentTimeMillis();
+            int count = processRecordService.getWorkerCount(project, prefix);
 
             if (count == 0) {
-                logger.info("--------" + projectName + "-----Started at ----" + new Date().getTime());
-                CompletableFuture<Boolean> completableFuture = processRecordService.generateSummary();
-                completableFutures.put(processRecordService, completableFuture);
+                logger.info("--------" + project + "-----Started at ----" + new Date().getTime());
+                CompletableFuture<Boolean> completableFuture = processRecordService.generateSummary(project, prefix);
+                ProjectMeta meta = new ProjectMeta(project, prefix, startTime);
+                completableFutures.put(meta, completableFuture);
             }
         }
 
         while (completableFutures.size() > 0) {
-            for (Entry<ProcessRecordService, CompletableFuture<Boolean>> entry : completableFutures.entrySet()) {
-                ProcessRecordService processRecord = entry.getKey();
+            for (Entry<ProjectMeta, CompletableFuture<Boolean>> entry : completableFutures.entrySet()) {
+                ProjectMeta meta = entry.getKey();
                 CompletableFuture<Boolean> completableFuture = entry.getValue();
-                if (processRecord != null && completableFuture != null) {
+                String project = meta.getProject();
+                String prefix = meta.getPrefix();
+                if (meta != null && completableFuture != null) {
 
-                    if ((new Date().getTime() - processRecord.getStartTime()) > TIME_OUT) {
+                    if ((new Date().getTime() - meta.getStartTime()) > TIME_OUT) {
                         if (!completableFuture.isDone() || completableFuture.isCancelled()) {
-                            processRecord.interruptThread();
+                            beanFactory.getBean(ProcessRecordService.class).interruptThread(project, prefix);
                             completableFuture.cancel(true);
                         }
-                        completableFutures.remove(processRecord);
+                        completableFutures.remove(meta);
                     }
                 }
             }
         }
     }
 
-    @Scheduled(fixedRate = 60000)
+    @Scheduled(fixedRate = 300000)
     private void purgeExecution() {
         logger.info("Purge Scheduler started--- ");
         PurgeExecutionService service = beanFactory.getBean(PurgeExecutionService.class);

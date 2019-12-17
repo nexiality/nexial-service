@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="20191029_144728" timestamp="2019-10-29T14:47:28" time="38.609" tests="7" errors="5">
+    <testsuite id="1" name="notepad" package="notepad" hostname="CWVSFT525" timestamp="2019-10-29T14:47:32" time="30.878" tests="7" errors="5">
+        <properties>
+            <property name="Run From" value="CWVSFT525"/>
+            <property name="Run OS" value="amd64 Windows 10 10.0"/>
+            <property name="Run User" value="ak093674"/>
+            <property name="Iteration" value="1 of 1"/>
+            <property name="Script" value="notepad.xlsx"/>
+            <property name="Logs" value="C:\projects\NotepadTest\output\20191029_144728\logs\nexial-20191029_144728.log"/>
+            <property name="notepad.20191029_144732.001.xlsx_Scenario_A10.log" value="C:\projects\NotepadTest\output\20191029_144728\logs\notepad.20191029_144732.001.xlsx_Scenario_A10.log"/>
+            <property name="notepad.20191029_144732.001.xlsx_Scenario_A11.log" value="C:\projects\NotepadTest\output\20191029_144728\logs\notepad.20191029_144732.001.xlsx_Scenario_A11.log"/>
+            <property name="notepad.20191029_144732.001.xlsx_Scenario_A12.log" value="C:\projects\NotepadTest\output\20191029_144728\logs\notepad.20191029_144732.001.xlsx_Scenario_A12.log"/>
+            <property name="notepad.20191029_144732.001.xlsx_Scenario_A13.log" value="C:\projects\NotepadTest\output\20191029_144728\logs\notepad.20191029_144732.001.xlsx_Scenario_A13.log"/>
+            <property name="notepad.20191029_144732.001.xlsx_Scenario_A8.log" value="C:\projects\NotepadTest\output\20191029_144728\logs\notepad.20191029_144732.001.xlsx_Scenario_A8.log"/>
+            <property name="Data File" value="notepad.data.xlsx"/>
+            <property name="DataSheet(s)" value="#default"/>
+            <property name="JAVA_OPT" value="-Dnexial.enableEmail=false,-Dnexial.outputToCloud=true,-Dnexial.openResult=false"/>
+            <property name="runtime args" value="-script C:\projects\NotepadTest\artifact\script\notepad.xlsx"/>
+        </properties>
+        <testcase id="TestCase1" name="TestCase1" classname="Scenario" timestamp="2019-10-29T14:47:36" time="26.755">
+            <failure type="failure found in test activity" message="5 of 7 FAILED. Check http://localhost:8099/download/NotepadTest/20191029_144728/notepad.20191029_144732.001.xlsx for execution result, C:\projects\NotepadTest\output\20191029_144728\logs\nexial-20191029_144728.log for execution logs"/>
+            <system-out>Total : 7
+                Passed: 2
+                Failed: 5
+                Output: http://localhost:8099/download/NotepadTest/20191029_144728/notepad.20191029_144732.001.xlsx
+                Logs : C:\projects\NotepadTest\output\20191029_144728\logs\nexial-20191029_144728.log
+            </system-out>
+        </testcase>
+    </testsuite>
+</testsuites>

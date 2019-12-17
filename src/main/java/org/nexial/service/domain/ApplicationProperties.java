@@ -26,13 +26,9 @@ public class ApplicationProperties extends ReloadApplicationProperties {
 
     public String getSummaryPath() { return environment.getProperty(LOCAL_EXECUTION_SUMMARY_PATH); }
 
-    public String getLocalArtifactsPath() {
-        return UtilityHelper.getPath(getArtifactPathPrefix() + getArtifactPath(), true);
-    }
+    public String getLocalArtifactsPath() { return UtilityHelper.getPath(getArtifactPath(), true); }
 
-    public String getLocalExecutionSummaryPath() {
-        return UtilityHelper.getPath(getArtifactPathPrefix() + getSummaryPath(), true);
-    }
+    public String getLocalExecutionSummaryPath() { return UtilityHelper.getPath(getSummaryPath(), true); }
 
     public String getLocalAddress() {
         return "http://" + environment.getProperty(SERVER_ADDRESS) + ":" +
