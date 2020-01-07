@@ -50,6 +50,4 @@ public final class Constants {
     public static final String RESULTS = "results";
 
     public static final Long TIME_OUT = 300000L;
-    public static final Long SUMMARY_SCHEDULER_TIME = 300000L;
-    public static final Long PURGE_SCHEDULER_TIME = 300000L;
 }

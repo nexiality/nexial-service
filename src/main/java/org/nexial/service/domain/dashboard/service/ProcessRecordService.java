@@ -96,7 +96,7 @@ public class ProcessRecordService {
                 String content = FileUtils.readFileToString(new File(outputPath), DEF_CHARSET);
                 if (content != null) { service.processJsonData(content); }
             } catch (Exception e) {
-                e.printStackTrace();
+                // e.printStackTrace();
                 dao.updateScheduleInfoStatus(runId, FAILED);
                 return true;
             } finally {
@@ -113,6 +113,4 @@ public class ProcessRecordService {
         }
         return false;
     }
-
 }
-

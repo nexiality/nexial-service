@@ -28,7 +28,7 @@ public class ExecutionSummaryScheduler {
         this.beanFactory = beanFactory;
     }
 
-    @Scheduled(fixedRate = 60000)
+    @Scheduled(fixedRateString = "${summary.schedule.time}")
     private void summaryScheduler() {
         //Todo  use Spring functionality and configure through xml
         logger.info("Summary Scheduler called " + DateUtility.format(System.currentTimeMillis()));
@@ -71,7 +71,7 @@ public class ExecutionSummaryScheduler {
         }
     }
 
-    @Scheduled(fixedRate = 300000)
+    @Scheduled(cron = "${purge.schedule.time}")
     private void purgeExecution() {
         logger.info("Purge Scheduler started--- ");
         PurgeExecutionService service = beanFactory.getBean(PurgeExecutionService.class);

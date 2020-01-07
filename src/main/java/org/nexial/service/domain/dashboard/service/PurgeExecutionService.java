@@ -44,11 +44,13 @@ public class PurgeExecutionService {
                 String project = (String) row.get("ProjectName");
                 String scheduleInfoId = (String) row.get("Id");
                 String runId = (String) row.get("RunId");
-                // need to consider return type
+                logger.error("Execution data for runId " + runId + " for project " + project + " started auto purging");
+
                 try {
+                    // need to consider return type
                     dao.deleteExecutionData(scheduleInfoId, project, runId);
                 } catch (Exception e) {
-                    logger.error("Execution data for runId " + runId + " is not autopurged");
+                    logger.error("Execution data for runId " + runId + " is not auto purged");
                     return;
                 }
 
@@ -61,10 +63,10 @@ public class PurgeExecutionService {
             String project = StringUtils.substringBefore(projectData, ".");
             String prefix = StringUtils.substringAfter(projectData, ".");
             try {
-                ProcessExecutionService service1 = factory.getBean(ProcessExecutionService.class);
-                service1.setProject(project);
-                service1.setPrefix(prefix);
-                service1.createSummaryOutput();
+                ProcessExecutionService service = factory.getBean(ProcessExecutionService.class);
+                service.setProject(project);
+                service.setPrefix(prefix);
+                service.createSummaryOutput();
             } catch (Exception e) {
                 logger.error("The generating summary process for project='" + project +
                              " and prefix='" + prefix + "' has been timed out");
@@ -88,7 +90,7 @@ public class PurgeExecutionService {
                     try {
                         dao.deleteExecutionData(id, project, runId);
                     } catch (Exception e) {
-                        logger.error("Execution data for runId " + runId + " is not autopurged");
+                        logger.error("Execution data for runId " + runId + " is not auto purged");
                         continue;
                     }
 
@@ -124,7 +126,7 @@ public class PurgeExecutionService {
             } catch (Exception e) {
                 logger.error("The generating summary process for project='" + project +
                              " and prefix='" + prefix + "' has been timed out");
-                e.printStackTrace();
+                // e.printStackTrace();
             }
         });
         return response;

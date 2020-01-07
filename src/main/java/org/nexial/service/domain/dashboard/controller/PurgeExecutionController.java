@@ -28,7 +28,8 @@ public class PurgeExecutionController {
                              .contentType(MediaType.APPLICATION_JSON).body(GSON.toJson(response));
     }
 
-    // Work-in progress
+    // Not Working yet
+    // todo explore this api
     @RequestMapping(value = "/purgeWithDate/{date}", method = RequestMethod.DELETE, produces = "application/json")
     public ResponseEntity<String> purgeDataWithDate(@PathVariable String date) {
         Response response = new Response("/purgeWithDate", "", 200, "OK", "");

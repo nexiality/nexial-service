@@ -92,6 +92,14 @@ public class ApplicationDao {
         return sqLiteConfig.queryForList(getSqlStatement("SQL_SELECT_STEPS"), activityId);
     }
 
+    public List<Map<String, Object>> getStepLink(String stepId) {
+        return sqLiteConfig.queryForList(getSqlStatement("SQL_SELECT_STEPLINKS"), stepId);
+    }
+
+    public List<Map<String, Object>> getLogs(String stepId) {
+        return sqLiteConfig.queryForList(getSqlStatement("SQL_SELECT_LOGS"), stepId);
+    }
+
     public List<Map<String, Object>> getScenarios(String iterationId) {
         return sqLiteConfig.queryForList(getSqlStatement("SQL_SELECT_SCENARIO"), iterationId);
     }
@@ -248,6 +256,16 @@ public class ApplicationDao {
     @Transactional
     public List<Map<String, Object>> getExecutionData(Object scopeId, String scopeType) {
         return sqLiteConfig.queryForList(getSqlStatement("SQL_SELECT_EXECUTION_DATA"), scopeId, scopeType);
+    }
+
+    @Transactional
+    public List<Map<String, Object>> getExecutionData1() {
+        return sqLiteConfig.queryForList(getSqlStatement("SQL_SELECT_EXECUTION_DATA1"));
+    }
+
+    @Transactional
+    public List<Map<String, Object>> getExecutionMetaData() {
+        return sqLiteConfig.queryForList(getSqlStatement("SQL_SELECT_EXECUTION_META_DATA"));
     }
 
     public void updateScheduleInfoStatus(String runId, Status status) {

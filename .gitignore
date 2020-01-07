@@ -27,3 +27,6 @@ hs_err_pid*
 .ideaDataSources/
 .idea/libraries/
 .idea/modules/
+/.gradle/
+/build/
+/gradle/

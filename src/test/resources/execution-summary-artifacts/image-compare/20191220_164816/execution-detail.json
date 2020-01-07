@@ -1,0 +1,230 @@
+{
+    "name": "20191220_164816",
+    "executionLevel": "EXECUTION",
+    "runHost": "CWVSFT525",
+    "runHostOs": "amd64 Windows 10 10.0",
+    "runUser": "ak093674",
+    "startTime": 1576840696454,
+    "endTime": 1576840747201,
+    "totalLevelPassed": 0,
+    "totalSteps": 16,
+    "passCount": 12,
+    "failCount": 4,
+    "warnCount": 0,
+    "executed": 16,
+    "failedFast": false,
+    "logs": {
+        "image_crop_with_astericks.20191220_164818.001.xlsx_STF-563_A11.log": "C:\\projects\\NewFeatures\\image-compare\\output\\20191220_164816\\logs\\image_crop_with_astericks.20191220_164818.001.xlsx_STF-563_A11.log",
+        "image_crop_with_astericks.20191220_164847.002.xlsx_STF-563_A11.log": "C:\\projects\\NewFeatures\\image-compare\\output\\20191220_164816\\logs\\image_crop_with_astericks.20191220_164847.002.xlsx_STF-563_A11.log",
+        "nexial-20191220_164816.log": "http://172.20.161.13:8099/execution/image-compare/20191220_164816/logs/nexial-20191220_164816.log"
+    },
+    "referenceData": {
+        "Data File": "image_crop_with_astericks.data.xlsx",
+        "DataSheet(s)": "#default",
+        "JAVA_OPT": "-Dnexial.outputToCloud=true,-Dnexial.verbose=true,-Dnexial.scope.iteration=1-2",
+        "runtime args": "-script C:\\projects\\NewFeatures\\image-compare\\artifact\\script\\image_crop_with_astericks.xlsx"
+    },
+    "nestedExecutions": [
+        {
+            "name": "image_crop_with_astericks (2)",
+            "executionLevel": "SCRIPT",
+            "scriptFile": "C:\\projects\\NewFeatures\\image-compare\\artifact\\script\\image_crop_with_astericks.xlsx",
+            "dataFile": "C:\\projects\\NewFeatures\\image-compare\\artifact\\data\\image_crop_with_astericks.data.xlsx",
+            "runHost": "CWVSFT525",
+            "runHostOs": "amd64 Windows 10 10.0",
+            "runUser": "ak093674",
+            "startTime": 1576840698418,
+            "endTime": 1576840746836,
+            "totalLevelPassed": 0,
+            "totalSteps": 16,
+            "passCount": 12,
+            "failCount": 4,
+            "warnCount": 0,
+            "executed": 16,
+            "failedFast": false,
+            "executionLog": "http://172.20.161.13:8099/execution/image-compare/20191220_164816/logs/nexial-20191220_164816.log",
+            "logs": {
+                "image_crop_with_astericks.20191220_164818.001.xlsx_STF-563_A11.log": "C:\\projects\\NewFeatures\\image-compare\\output\\20191220_164816\\logs\\image_crop_with_astericks.20191220_164818.001.xlsx_STF-563_A11.log",
+                "image_crop_with_astericks.20191220_164847.002.xlsx_STF-563_A11.log": "C:\\projects\\NewFeatures\\image-compare\\output\\20191220_164816\\logs\\image_crop_with_astericks.20191220_164847.002.xlsx_STF-563_A11.log",
+                "nexial-20191220_164816.log": "http://172.20.161.13:8099/execution/image-compare/20191220_164816/logs/nexial-20191220_164816.log"
+            },
+            "referenceData": { },
+            "nestedExecutions": [
+                {
+                    "name": "1 of 2",
+                    "executionLevel": "ITERATION",
+                    "scriptFile": "C:\\projects\\NewFeatures\\image-compare\\artifact\\script\\image_crop_with_astericks.xlsx",
+                    "testScriptLink": "http://172.20.161.13:8099/execution/image-compare/20191220_164816/image_crop_with_astericks.20191220_164818.001.xlsx",
+                    "runHost": "CWVSFT525",
+                    "runHostOs": "amd64 Windows 10 10.0",
+                    "runUser": "ak093674",
+                    "startTime": 1576840698420,
+                    "endTime": 1576840725210,
+                    "totalLevelPassed": 0,
+                    "totalSteps": 8,
+                    "passCount": 6,
+                    "failCount": 2,
+                    "warnCount": 0,
+                    "executed": 8,
+                    "failedFast": false,
+                    "executionLog": "C:\\projects\\NewFeatures\\image-compare\\output\\20191220_164816\\logs\\nexial-20191220_164816.log",
+                    "logs": {
+                        "image_crop_with_astericks.20191220_164818.001.xlsx_STF-563_A11.log": "C:\\projects\\NewFeatures\\image-compare\\output\\20191220_164816\\logs\\image_crop_with_astericks.20191220_164818.001.xlsx_STF-563_A11.log",
+                        "nexial-20191220_164816.log": "C:\\projects\\NewFeatures\\image-compare\\output\\20191220_164816\\logs\\nexial-20191220_164816.log"
+                    },
+                    "referenceData": {
+                        "Data File": "image_crop_with_astericks.data.xlsx",
+                        "DataSheet(s)": "#default",
+                        "JAVA_OPT": "-Dnexial.outputToCloud=true,-Dnexial.verbose=true,-Dnexial.scope.iteration=1-2",
+                        "runtime args": "-script C:\\projects\\NewFeatures\\image-compare\\artifact\\script\\image_crop_with_astericks.xlsx"
+                    },
+                    "nestedExecutions": [
+                        {
+                            "name": "STF-563",
+                            "executionLevel": "SCENARIO",
+                            "runHost": "CWVSFT525",
+                            "runHostOs": "amd64 Windows 10 10.0",
+                            "runUser": "ak093674",
+                            "startTime": 1576840700763,
+                            "endTime": 1576840723813,
+                            "totalLevelPassed": 0,
+                            "totalSteps": 8,
+                            "passCount": 6,
+                            "failCount": 2,
+                            "warnCount": 0,
+                            "executed": 8,
+                            "failedFast": false,
+                            "executionLog": "C:\\projects\\NewFeatures\\image-compare\\output\\20191220_164816\\logs\\nexial-20191220_164816.log",
+                            "logs": {
+                                "image_crop_with_astericks.20191220_164818.001.xlsx_STF-563_A11.log": "C:\\projects\\NewFeatures\\image-compare\\output\\20191220_164816\\logs\\image_crop_with_astericks.20191220_164818.001.xlsx_STF-563_A11.log",
+                                "nexial-20191220_164816.log": "C:\\projects\\NewFeatures\\image-compare\\output\\20191220_164816\\logs\\nexial-20191220_164816.log"
+                            },
+                            "referenceData": { },
+                            "nestedExecutions": [
+                                {
+                                    "name": "TestCase",
+                                    "executionLevel": "ACTIVITY",
+                                    "runHost": "CWVSFT525",
+                                    "runHostOs": "amd64 Windows 10 10.0",
+                                    "runUser": "ak093674",
+                                    "startTime": 1576840700763,
+                                    "endTime": 1576840723812,
+                                    "totalLevelPassed": 0,
+                                    "totalSteps": 8,
+                                    "passCount": 6,
+                                    "failCount": 2,
+                                    "warnCount": 0,
+                                    "executed": 8,
+                                    "failedFast": false,
+                                    "logs": { },
+                                    "referenceData": { },
+                                    "nestedExecutions": [ ],
+                                    "planSequence": 0,
+                                    "iterationIndex": 0,
+                                    "iterationTotal": 0
+                                }
+                            ],
+                            "planSequence": 0,
+                            "iterationIndex": 0,
+                            "iterationTotal": 0
+                        }
+                    ],
+                    "planSequence": 0,
+                    "iterationIndex": 1,
+                    "iterationTotal": 2
+                }, {
+                    "name": "2 of 2",
+                    "executionLevel": "ITERATION",
+                    "scriptFile": "C:\\projects\\NewFeatures\\image-compare\\artifact\\script\\image_crop_with_astericks.xlsx",
+                    "testScriptLink": "http://172.20.161.13:8099/execution/image-compare/20191220_164816/image_crop_with_astericks.20191220_164847.002.xlsx",
+                    "runHost": "CWVSFT525",
+                    "runHostOs": "amd64 Windows 10 10.0",
+                    "runUser": "ak093674",
+                    "startTime": 1576840727388,
+                    "endTime": 1576840744993,
+                    "totalLevelPassed": 0,
+                    "totalSteps": 8,
+                    "passCount": 6,
+                    "failCount": 2,
+                    "warnCount": 0,
+                    "executed": 8,
+                    "failedFast": false,
+                    "executionLog": "C:\\projects\\NewFeatures\\image-compare\\output\\20191220_164816\\logs\\nexial-20191220_164816.log",
+                    "logs": {
+                        "image_crop_with_astericks.20191220_164818.001.xlsx_STF-563_A11.log": "C:\\projects\\NewFeatures\\image-compare\\output\\20191220_164816\\logs\\image_crop_with_astericks.20191220_164818.001.xlsx_STF-563_A11.log",
+                        "image_crop_with_astericks.20191220_164847.002.xlsx_STF-563_A11.log": "C:\\projects\\NewFeatures\\image-compare\\output\\20191220_164816\\logs\\image_crop_with_astericks.20191220_164847.002.xlsx_STF-563_A11.log",
+                        "nexial-20191220_164816.log": "C:\\projects\\NewFeatures\\image-compare\\output\\20191220_164816\\logs\\nexial-20191220_164816.log"
+                    },
+                    "referenceData": {
+                        "Data File": "image_crop_with_astericks.data.xlsx",
+                        "DataSheet(s)": "#default",
+                        "JAVA_OPT": "-Dnexial.outputToCloud=true,-Dnexial.verbose=true,-Dnexial.scope.iteration=1-2",
+                        "runtime args": "-script C:\\projects\\NewFeatures\\image-compare\\artifact\\script\\image_crop_with_astericks.xlsx"
+                    },
+                    "nestedExecutions": [
+                        {
+                            "name": "STF-563",
+                            "executionLevel": "SCENARIO",
+                            "runHost": "CWVSFT525",
+                            "runHostOs": "amd64 Windows 10 10.0",
+                            "runUser": "ak093674",
+                            "startTime": 1576840728707,
+                            "endTime": 1576840744561,
+                            "totalLevelPassed": 0,
+                            "totalSteps": 8,
+                            "passCount": 6,
+                            "failCount": 2,
+                            "warnCount": 0,
+                            "executed": 8,
+                            "failedFast": false,
+                            "executionLog": "C:\\projects\\NewFeatures\\image-compare\\output\\20191220_164816\\logs\\nexial-20191220_164816.log",
+                            "logs": {
+                                "image_crop_with_astericks.20191220_164818.001.xlsx_STF-563_A11.log": "C:\\projects\\NewFeatures\\image-compare\\output\\20191220_164816\\logs\\image_crop_with_astericks.20191220_164818.001.xlsx_STF-563_A11.log",
+                                "image_crop_with_astericks.20191220_164847.002.xlsx_STF-563_A11.log": "C:\\projects\\NewFeatures\\image-compare\\output\\20191220_164816\\logs\\image_crop_with_astericks.20191220_164847.002.xlsx_STF-563_A11.log",
+                                "nexial-20191220_164816.log": "C:\\projects\\NewFeatures\\image-compare\\output\\20191220_164816\\logs\\nexial-20191220_164816.log"
+                            },
+                            "referenceData": { },
+                            "nestedExecutions": [
+                                {
+                                    "name": "TestCase",
+                                    "executionLevel": "ACTIVITY",
+                                    "runHost": "CWVSFT525",
+                                    "runHostOs": "amd64 Windows 10 10.0",
+                                    "runUser": "ak093674",
+                                    "startTime": 1576840728707,
+                                    "endTime": 1576840744561,
+                                    "totalLevelPassed": 0,
+                                    "totalSteps": 8,
+                                    "passCount": 6,
+                                    "failCount": 2,
+                                    "warnCount": 0,
+                                    "executed": 8,
+                                    "failedFast": false,
+                                    "logs": { },
+                                    "referenceData": { },
+                                    "nestedExecutions": [ ],
+                                    "planSequence": 0,
+                                    "iterationIndex": 0,
+                                    "iterationTotal": 0
+                                }
+                            ],
+                            "planSequence": 0,
+                            "iterationIndex": 0,
+                            "iterationTotal": 0
+                        }
+                    ],
+                    "planSequence": 0,
+                    "iterationIndex": 2,
+                    "iterationTotal": 2
+                }
+            ],
+            "planSequence": 0,
+            "iterationIndex": 0,
+            "iterationTotal": 2,
+            "planDescription": "Started on 12/20/2019 04:48:14 PM from CWVSFT525 via user ak093674"
+        }
+    ],
+    "planSequence": 0,
+    "iterationIndex": 0,
+    "iterationTotal": 0
+}
