@@ -1,18 +1,19 @@
 package org.nexial.service.domain;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.nexial.commons.utils.ResourceUtils;
-import org.nexial.service.domain.dashboard.scheduler.ExecutionSummaryScheduler;
 import org.nexial.service.domain.dbconfig.ApplicationDao;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -24,48 +25,60 @@ public class SummarySchedulerTest {
     public static String jsonFile = "execution-detail.json";
     public static String artifactPath = "execution-summary-artifacts";
     public static String separator = "/";
+
     @Autowired
-    private ExecutionSummaryScheduler scheduler;
-
-    @BeforeClass
-    public static void tearUp() {
-        String resourceFilePath = ResourceUtils.getResourceFilePath("nexial-db-test.db");
-        if (resourceFilePath != null) {
-            FileUtils.deleteQuietly(new File(resourceFilePath));
-        }
-    }
-
+    private ApplicationProperties properties;
     @Autowired
     private ApplicationDao dao;
 
-    @AfterClass
-    public static void tearDown() {
+    @BeforeClass
+    public static void tearUp() {
+        File file = new File("nexial-db-test.db");
+        if (file.exists()) {
+            FileUtils.deleteQuietly(file);
+        }
         String resourceFilePath = ResourceUtils.getResourceFilePath("nexial-db-test.db");
         if (resourceFilePath != null) {
             FileUtils.deleteQuietly(new File(resourceFilePath));
         }
     }
 
+    @AfterClass
+    public static void tearDown() {
+        File file = new File("nexial-db-test.db");
+        if (file.exists()) { FileUtils.deleteQuietly(file); }
+
+        String resourceFilePath = ResourceUtils.getResourceFilePath("nexial-db-test.db");
+        if (resourceFilePath != null) { FileUtils.deleteQuietly(new File(resourceFilePath)); }
+    }
+
+    @After
+    public void cleanUp() {
+        File file = new File(properties.getLocalExecutionSummaryPath());
+        if (file.exists()) { FileUtils.deleteQuietly(file); }
+    }
+
     @Test
-    public void scheduleData() throws InterruptedException {
+    public void scheduleData() throws InterruptedException, IOException {
         String project1 = "image-compare";
         String runId1 = "20191220_164816";
-        String resourceFilePath1 = ResourceUtils.getResourceFilePath(artifactPath + separator +
-                                                                     project1 + separator +
-                                                                     runId1 + separator + jsonFile);
+        String resourceFilePath1 = ResourceUtils.getResourceFilePath(artifactPath + separator + project1 +
+                                                                     separator + runId1 + separator + jsonFile);
 
-        // Thread.sleep(30000 * 2);
         String project = "NotepadTest";
-        String runId = "20191029_144728";
-        String resourceFilePath = ResourceUtils.getResourceFilePath(artifactPath + separator +
-                                                                    project + separator + runId + separator +
-                                                                    jsonFile);
+        String runId = "20191211_180549";
+        String resourceFilePath = ResourceUtils.getResourceFilePath(artifactPath + separator + project +
+                                                                    separator + runId + separator + jsonFile);
         // todo need to provide proper
         Thread.sleep(10000);
         dao.insertIntoScheduleInfo(project1, runId1, resourceFilePath1);
         dao.insertIntoScheduleInfo(project, runId, resourceFilePath);
 
-        Thread.sleep(30000 * 2);
+        Thread.sleep(properties.getSummarySchedulerTime() + 10000);
+
+        assertSummary(project);
+        assertSummary(project1);
+
         assertData1(project, runId);
         assertData(project1, runId1);
     }
@@ -98,7 +111,7 @@ public class SummarySchedulerTest {
 
         List<Map<String, Object>> iterations = dao.getIterations(scriptId);
         Assert.assertNotNull(iterations);
-        Assert.assertEquals(1, iterations.size());
+        Assert.assertEquals(2, iterations.size());
         String iterationId = (String) iterations.get(0).get("Id");
 
         List<Map<String, Object>> scenarios = dao.getScenarios(iterationId);
@@ -113,7 +126,7 @@ public class SummarySchedulerTest {
 
         List<Map<String, Object>> steps = dao.getSteps(activityId);
         Assert.assertNotNull(steps);
-        Assert.assertEquals(9, steps.size());
+        Assert.assertEquals(5, steps.size());
 
         dao.deleteExecutionData(scheduleInfoId, project, runId);
     }
@@ -175,5 +188,16 @@ public class SummarySchedulerTest {
         }
 
         dao.deleteExecutionData(scheduleInfoId, project1, runId1);
+    }
+
+    private void assertSummary(String project) throws IOException {
+        File expectedSummary = new File(ResourceUtils.getResourceFilePath("expected-nexial-summary/" + project +
+                                                                          "/summary_output.json"));
+        File actualSummary = new File(properties.getLocalExecutionSummaryPath() + "/" +
+                                      project + "/summary_output.json");
+        String expected = FileUtils.readFileToString(expectedSummary, "UTF-8");
+        String actual = FileUtils.readFileToString(actualSummary, "UTF-8");
+
+        Assert.assertEquals(expected, actual);
     }
 }

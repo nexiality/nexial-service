@@ -1,0 +1,70 @@
+{
+    "results": [
+        {
+            "2019/12/11 18:05:49": {
+                "scriptResults": [
+                    {
+                        "referenceData": { },
+                        "failCount": 0,
+                        "nestedExecutions": [
+                            {
+                                "referenceData": {
+                                    "runtime args": "-script C:\\projects\\NotepadTest\\artifact\\script\\notepad.xlsx -scenario Demo",
+                                    "JAVA_OPT": "-Dnexial.outputToCloud=true,-Dnexial.enableEmail=false,-Dnexial.openResult=false",
+                                    "DataSheet(s)": "#default",
+                                    "Data File": "notepad.data.xlsx"
+                                },
+                                "sourceScript": "artifact/script/notepad.xlsx",
+                                "failCount": 0,
+                                "testScriptLink": "http://172.20.161.13:8099/execution/NotepadTest/20191211_180549/notepad.20191211_180551.001.xlsx",
+                                "name": "1 of 2",
+                                "totalSteps": 5,
+                                "startTime": 1576067751781,
+                                "endTime": 1576067770159,
+                                "passCount": 5,
+                                "executionLog": "output/20191211_180549/logs/nexial-20191211_180549.log"
+                            },
+                            {
+                                "referenceData": {
+                                    "runtime args": "-script C:\\projects\\NotepadTest\\artifact\\script\\notepad.xlsx -scenario Demo",
+                                    "JAVA_OPT": "-Dnexial.outputToCloud=true,-Dnexial.enableEmail=false,-Dnexial.openResult=false",
+                                    "DataSheet(s)": "#default",
+                                    "Data File": "notepad.data.xlsx"
+                                },
+                                "sourceScript": "artifact/script/notepad.xlsx",
+                                "failCount": 0,
+                                "testScriptLink": "http://172.20.161.13:8099/execution/NotepadTest/20191211_180549/notepad.20191211_180611.002.xlsx",
+                                "name": "2 of 2",
+                                "totalSteps": 5,
+                                "startTime": 1576067771513,
+                                "endTime": 1576067776505,
+                                "passCount": 5,
+                                "executionLog": "output/20191211_180549/logs/nexial-20191211_180549.log"
+                            }
+                        ],
+                        "name": "notepad (2)",
+                        "totalSteps": 10,
+                        "startTime": 1576067751778,
+                        "endTime": 1576067777531,
+                        "scriptFile": "artifact/script/notepad.xlsx",
+                        "passCount": 10
+                    }
+                ],
+                "plan": {
+                    "referenceData": {
+                        "runtime args": "-script C:\\projects\\NotepadTest\\artifact\\script\\notepad.xlsx -scenario Demo",
+                        "JAVA_OPT": "-Dnexial.outputToCloud=true,-Dnexial.enableEmail=false,-Dnexial.openResult=false",
+                        "DataSheet(s)": "#default",
+                        "Data File": "notepad.data.xlsx"
+                    },
+                    "failCount": 0,
+                    "name": "20191211_180549",
+                    "totalSteps": 10,
+                    "startTime": 1576067749457,
+                    "endTime": 1576067778758,
+                    "passCount": 10
+                }
+            }
+        }
+    ]
+}

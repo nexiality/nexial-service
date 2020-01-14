@@ -1,5 +1,6 @@
 package org.nexial.service.domain;
 
+import org.apache.commons.lang3.math.NumberUtils;
 import org.nexial.service.domain.utils.UtilityHelper;
 import org.springframework.stereotype.Component;
 
@@ -25,6 +26,10 @@ public class ApplicationProperties extends ReloadApplicationProperties {
     public String getArtifactPath() { return environment.getProperty(LOCAL_ARTIFACTS_PATH); }
 
     public String getSummaryPath() { return environment.getProperty(LOCAL_EXECUTION_SUMMARY_PATH); }
+
+    public Long getSummarySchedulerTime() {
+        return NumberUtils.toLong(environment.getProperty(SUMMARY_SCHEDULER_TIME));
+    }
 
     public String getLocalArtifactsPath() { return UtilityHelper.getPath(getArtifactPath(), true); }
 

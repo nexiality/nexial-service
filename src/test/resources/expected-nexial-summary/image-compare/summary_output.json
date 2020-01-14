@@ -1,0 +1,70 @@
+{
+    "results": [
+        {
+            "2019/12/20 16:48:16": {
+                "scriptResults": [
+                    {
+                        "referenceData": { },
+                        "failCount": 4,
+                        "nestedExecutions": [
+                            {
+                                "referenceData": {
+                                    "runtime args": "-script C:\\projects\\NewFeatures\\image-compare\\artifact\\script\\image_crop_with_astericks.xlsx",
+                                    "JAVA_OPT": "-Dnexial.outputToCloud=true,-Dnexial.verbose=true,-Dnexial.scope.iteration=1-2",
+                                    "DataSheet(s)": "#default",
+                                    "Data File": "image_crop_with_astericks.data.xlsx"
+                                },
+                                "sourceScript": "artifact/script/image_crop_with_astericks.xlsx",
+                                "failCount": 2,
+                                "testScriptLink": "http://172.20.161.13:8099/execution/image-compare/20191220_164816/image_crop_with_astericks.20191220_164818.001.xlsx",
+                                "name": "1 of 2",
+                                "totalSteps": 8,
+                                "startTime": 1576840698420,
+                                "endTime": 1576840725210,
+                                "passCount": 6,
+                                "executionLog": "output/20191220_164816/logs/nexial-20191220_164816.log"
+                            },
+                            {
+                                "referenceData": {
+                                    "runtime args": "-script C:\\projects\\NewFeatures\\image-compare\\artifact\\script\\image_crop_with_astericks.xlsx",
+                                    "JAVA_OPT": "-Dnexial.outputToCloud=true,-Dnexial.verbose=true,-Dnexial.scope.iteration=1-2",
+                                    "DataSheet(s)": "#default",
+                                    "Data File": "image_crop_with_astericks.data.xlsx"
+                                },
+                                "sourceScript": "artifact/script/image_crop_with_astericks.xlsx",
+                                "failCount": 2,
+                                "testScriptLink": "http://172.20.161.13:8099/execution/image-compare/20191220_164816/image_crop_with_astericks.20191220_164847.002.xlsx",
+                                "name": "2 of 2",
+                                "totalSteps": 8,
+                                "startTime": 1576840727388,
+                                "endTime": 1576840744993,
+                                "passCount": 6,
+                                "executionLog": "output/20191220_164816/logs/nexial-20191220_164816.log"
+                            }
+                        ],
+                        "name": "image_crop_with_astericks (2)",
+                        "totalSteps": 16,
+                        "startTime": 1576840698418,
+                        "endTime": 1576840746836,
+                        "scriptFile": "artifact/script/image_crop_with_astericks.xlsx",
+                        "passCount": 12
+                    }
+                ],
+                "plan": {
+                    "referenceData": {
+                        "runtime args": "-script C:\\projects\\NewFeatures\\image-compare\\artifact\\script\\image_crop_with_astericks.xlsx",
+                        "JAVA_OPT": "-Dnexial.outputToCloud=true,-Dnexial.verbose=true,-Dnexial.scope.iteration=1-2",
+                        "DataSheet(s)": "#default",
+                        "Data File": "image_crop_with_astericks.data.xlsx"
+                    },
+                    "failCount": 4,
+                    "name": "20191220_164816",
+                    "totalSteps": 16,
+                    "startTime": 1576840696454,
+                    "endTime": 1576840747201,
+                    "passCount": 12
+                }
+            }
+        }
+    ]
+}

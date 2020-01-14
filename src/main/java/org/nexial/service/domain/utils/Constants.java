@@ -26,6 +26,7 @@ public final class Constants {
     public static final String LOCAL_ARTIFACTS_PATH = "config.local.artifactsPath";
     public static final String LOCAL_PATH_PREFIX = "config.local.prefix";
     public static final String LOCAL_EXECUTION_SUMMARY_PATH = "config.local.executionSummaryPath";
+    public static final String SUMMARY_SCHEDULER_TIME = "summary.schedule.time";
 
     //local server
     public static final String SERVER_ADDRESS = "server.address";

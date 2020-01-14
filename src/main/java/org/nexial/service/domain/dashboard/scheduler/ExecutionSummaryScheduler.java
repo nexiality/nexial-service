@@ -31,7 +31,7 @@ public class ExecutionSummaryScheduler {
     @Scheduled(fixedRateString = "${summary.schedule.time}")
     private void summaryScheduler() {
         //Todo  use Spring functionality and configure through xml
-        logger.info("Summary Scheduler called " + DateUtility.format(System.currentTimeMillis()));
+        logger.info("Summary Scheduler called at " + DateUtility.format(System.currentTimeMillis()));
         List<Map<String, Object>> projectList = beanFactory.getBean(ProcessRecordService.class).getReceivedProjects();
         Map<ProjectMeta, CompletableFuture<Boolean>> completableFutures = new ConcurrentHashMap<>();
 
@@ -55,13 +55,12 @@ public class ExecutionSummaryScheduler {
             for (Entry<ProjectMeta, CompletableFuture<Boolean>> entry : completableFutures.entrySet()) {
                 ProjectMeta meta = entry.getKey();
                 CompletableFuture<Boolean> completableFuture = entry.getValue();
-                String project = meta.getProject();
-                String prefix = meta.getPrefix();
                 if (meta != null && completableFuture != null) {
 
                     if ((new Date().getTime() - meta.getStartTime()) > TIME_OUT) {
                         if (!completableFuture.isDone() || completableFuture.isCancelled()) {
-                            beanFactory.getBean(ProcessRecordService.class).interruptThread(project, prefix);
+                            beanFactory.getBean(ProcessRecordService.class)
+                                       .interruptThread(meta.getProject(), meta.getPrefix());
                             completableFuture.cancel(true);
                         }
                         completableFutures.remove(meta);
