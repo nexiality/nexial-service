@@ -1,14 +1,8 @@
 package org.nexial.service.domain.dashboard.controller;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.nexial.service.domain.ApplicationProperties;
 import org.nexial.service.domain.dashboard.IFileStorage;
@@ -16,9 +10,7 @@ import org.nexial.service.domain.dashboard.service.DashboardService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.BeanFactory;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
@@ -47,39 +39,6 @@ public class DashboardController {
     @GetMapping("/")
     public String defaultPage() {
         return "index";
-    }
-
-    @GetMapping("/dashboard*")
-    public String getDashboard() {
-        return "executionsummary";
-    }
-
-    @GetMapping(value = "/projectfiles*")
-    @ResponseBody
-    public ResponseEntity getProjectFiles(HttpServletRequest request, HttpServletResponse response) throws Exception {
-        String projectName = request.getParameter("project");
-        String file = request.getParameter("file");
-        String location = properties.getLocalExecutionSummaryPath() + projectName + file;
-        File filePath = new File(location);
-        InputStream inputStreams = new FileInputStream(filePath);
-        IOUtils.copy(inputStreams, response.getOutputStream());
-        inputStreams.close();
-        response.flushBuffer();
-        return new ResponseEntity(HttpStatus.OK);
-    }
-
-    @GetMapping(value = "/defaultfiles*")
-    @ResponseBody
-    public ResponseEntity getDefaultConfigFiles(HttpServletRequest request, HttpServletResponse response)
-        throws Exception {
-        String file = request.getParameter("file");
-        String location = properties.getLocalExecutionSummaryPath() + file;
-        File filePath = new File(location);
-        InputStream inputStreams = new FileInputStream(filePath);
-        IOUtils.copy(inputStreams, response.getOutputStream());
-        inputStreams.close();
-        response.flushBuffer();
-        return new ResponseEntity(HttpStatus.OK);
     }
 
     @RequestMapping(value = "/projects", method = RequestMethod.GET)
