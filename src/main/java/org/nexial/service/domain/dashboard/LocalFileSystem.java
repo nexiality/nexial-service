@@ -30,6 +30,11 @@ public class LocalFileSystem implements IFileStorage {
     @Override
     public void deleteFolders(String path) { }
 
+    @Override
+    public String getSummaryUrl() {
+        return properties.getLocalAddress() + "dashboard?project=";
+    }
+
     private String getLocalUrl(File file, String urlPath) {
         try {
             String url = UtilityHelper.getPath(file.getCanonicalPath(), false);

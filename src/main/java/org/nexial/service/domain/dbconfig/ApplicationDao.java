@@ -274,6 +274,40 @@ public class ApplicationDao {
                              status, processingDate, runId);
     }
 
+    public void insertIntoProjectInfo(String project, String dashboard, String description) {
+        String date = SIMPLE_DATE_FORMAT.format(new Date());
+        String projectId = generateId();
+        int result = sqLiteConfig.execute(getSqlStatement("SQL_INSERT_PROJECTINFO"),
+                                          projectId, project, description, date, date);
+        if (result == 1) { insertDashboardInfo(dashboard, description, projectId);}
+    }
+
+    public void insertDashboardInfo(String dashboard, String description, String projectId) {
+        String date = SIMPLE_DATE_FORMAT.format(new Date());
+        sqLiteConfig.execute(getSqlStatement("SQL_INSERT_DASHBOARDINFO"),
+                             generateId(), dashboard, description, projectId, date, date);
+    }
+
+    public void updateProjectInfo(String id, String name, String description) {
+        String date = SIMPLE_DATE_FORMAT.format(new Date());
+        sqLiteConfig.execute(getSqlStatement("SQL_UPDATE_DASHBOARD"), name, description, date, id);
+    }
+
+    @Transactional
+    public void updateSuperDashboardInfo(String id, String name, String description) {
+        String existingName = (String) sqLiteConfig.queryForObject(getSqlStatement("SQL_SELECT_SUPERDASHBOARD_NAME"), String.class, id);
+        String date = SIMPLE_DATE_FORMAT.format(new Date());
+        sqLiteConfig.execute(getSqlStatement("SQL_UPDATE_SUPERDASHBOARD_INFO"), name, description, date, existingName);
+    }
+
+    @Transactional
+    public void updateSuperDashboardProjects(String id, String name, String description, int maxPosition, Map<String, Object> row) {
+        if (id != null) { updateSuperDashboardInfo(id, name, description); }
+        String date = SIMPLE_DATE_FORMAT.format(new Date());
+        sqLiteConfig.execute(getSqlStatement("SQL_INSERT_SUPERDASHBOARD_INFO"), generateId(), name, description,maxPosition,
+                             row.get("ProjectId"), row.get("DashboardId"), date, date);
+    }
+
     @Transactional
     public List<Map<String, Object>> getRunIds(String project, String prefix) {
         return sqLiteConfig.queryForList(getSqlStatement("SQL_SELECT_RUN_ID_SCHEDULE_INFO"),
@@ -332,6 +366,15 @@ public class ApplicationDao {
         return sqLiteConfig.queryForList(getSqlStatement("SQL_SELECT_SCHEDULE_INFO_RUNID"), runId);
     }
 
+    public int getMaxExecutionCount(String name) {
+        return (int)sqLiteConfig.queryForObject(getSqlStatement("SQL_COUNT_POSITION_SUPERDASHBOARD"),Integer.class,name);
+    }
+
+    public void updatePosition(Object id, Object position) {
+        String date = SIMPLE_DATE_FORMAT.format(new Date());
+        sqLiteConfig.execute(getSqlStatement("SQL_UPDATE_SUPERDASHBOARD_POSITION"),position,date,id);
+    }
+
     @Transactional
     protected void insertStepLinks(String stepId, StepData stepData) {
         List<List<Object>> stepLinkParams = stepData.getStepLinkParams();
@@ -379,8 +422,37 @@ public class ApplicationDao {
                                                                   json.getString("executionLevel")));
     }
 
+    public List<Map<String, Object>> getProjectsList() {
+        return sqLiteConfig.queryForList(getSqlStatement("SQL_SELECT_PROJECTS"), null);
+    }
+
+    public List<Map<String, Object>> getDashboardList(String id) {
+        return sqLiteConfig.queryForList(getSqlStatement("SQL_SELECT_DASHBOARDS"), id);
+    }
+
+    public List<Map<String, Object>> getSuperDashboardList() {
+        return sqLiteConfig.queryForList(getSqlStatement("SQL_SELECT_SUPERDASHBOARDS"), null);
+    }
+
+    public List<Map<String, Object>> getSuperDashboardProjectList(String name) {
+        return sqLiteConfig.queryForList(getSqlStatement("SQL_SELECT_SUPERDASHBOARD_JOIN"), name);
+    }
+
+    public List<Map<String, Object>> getAllProjectsList() {
+        return sqLiteConfig.queryForList(getSqlStatement("SQL_SELECT_PROJECT_DASHBOARD_JOIN"));
+    }
+
     @Transactional
-    protected String generateId() { return RandomStringUtils.randomAlphanumeric(ID_LENGTH); }
+    public void deleteFromSuperDashboardByName(String name) {
+        sqLiteConfig.execute(getSqlStatement("SQL_DELETE_SUPERDASHBOARD_PROJECTS_BY_NAME"), name);
+    }
+
+    @Transactional
+    public void deleteFromSuperDashboardById(String Id) {
+        sqLiteConfig.execute(getSqlStatement("SQL_DELETE_SUPERDASHBOARD_PROJECTS_BY_ID"), Id);
+    }
+
+    private String generateId() { return RandomStringUtils.randomAlphanumeric(ID_LENGTH); }
 
     @Transactional
     protected String getSqlStatement(String sqlStatement) { return properties.getProperty(sqlStatement); }

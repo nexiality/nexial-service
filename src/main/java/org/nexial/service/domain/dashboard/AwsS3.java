@@ -49,6 +49,11 @@ public class AwsS3 implements IFileStorage {
         }
     }
 
+    @Override
+    public String getSummaryUrl() {
+        return "https://s3." + properties.getRegion() + ".amazonaws.com/" + properties.getCloudResourcePath() +
+               "/executionsummary.html?project=";
+    }
     @Nullable
     private String uploadToCloud(File file, String summaryOutputKey, boolean removeLocal) {
         if (!file.exists()) { return null; }

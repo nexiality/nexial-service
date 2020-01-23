@@ -8,4 +8,6 @@ public interface IFileStorage {
     void uploadSummary(File file, String project);
 
     void deleteFolders(String path);
+
+    String getSummaryUrl();
 }

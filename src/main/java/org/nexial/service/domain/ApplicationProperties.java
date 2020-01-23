@@ -31,6 +31,8 @@ public class ApplicationProperties extends ReloadApplicationProperties {
         return NumberUtils.toLong(environment.getProperty(SUMMARY_SCHEDULER_TIME));
     }
 
+    public String getCloudResourcePath(){return environment.getProperty(CLOUD_RESOURCE_BASE);}
+
     public String getLocalArtifactsPath() { return UtilityHelper.getPath(getArtifactPath(), true); }
 
     public String getLocalExecutionSummaryPath() { return UtilityHelper.getPath(getSummaryPath(), true); }
