@@ -14,11 +14,18 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.nexial.commons.utils.ResourceUtils;
+import org.nexial.core.plugins.json.JsonCommand;
 import org.nexial.service.domain.dashboard.service.PurgeExecutionService;
 import org.nexial.service.domain.dbconfig.ApplicationDao;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
+
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+
+import static org.nexial.core.NexialConst.GSON;
+import static org.nexial.core.NexialConst.GSON_COMPRESSED;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
@@ -204,12 +211,13 @@ public class SummarySchedulerTest {
     private void assertSummary(String project) throws IOException {
         File expectedSummary = new File(ResourceUtils.getResourceFilePath("expected-nexial-summary/" + project +
                                                                           SUMMARY_OUTPUT));
-        File actualSummary = new File(properties.getLocalExecutionSummaryPath() + "/" +
-                                      project + SUMMARY_OUTPUT);
+        File actualSummary = new File(properties.getLocalExecutionSummaryPath() + "/" + project + SUMMARY_OUTPUT);
+
         String expected = FileUtils.readFileToString(expectedSummary, "UTF-8");
         String actual = FileUtils.readFileToString(actualSummary, "UTF-8");
-
-        Assert.assertEquals(expected, actual);
+        JsonElement actualElement = GSON.fromJson(actual, JsonElement.class);
+        JsonElement expectedElement = GSON.fromJson(expected, JsonElement.class);
+        Assert.assertEquals(GSON_COMPRESSED.toJson(expectedElement), GSON_COMPRESSED.toJson(actualElement));
     }
 
     private void assertSummaryAfterPurge(String project) throws IOException {
