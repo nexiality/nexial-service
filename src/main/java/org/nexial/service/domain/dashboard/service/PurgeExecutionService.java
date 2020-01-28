@@ -19,7 +19,8 @@ import static org.nexial.service.domain.utils.Constants.SIMPLE_DATE_FORMAT;
 import static org.nexial.service.domain.utils.Constants.SIMPLE_DATE_FORMAT1;
 
 @Service
-public class PurgeExecutionService {
+public class
+PurgeExecutionService {
     private static final Logger logger = LoggerFactory.getLogger(PurgeExecutionService.class);
     private final ApplicationProperties properties;
     private final ApplicationDao dao;
@@ -78,24 +79,7 @@ public class PurgeExecutionService {
     // need to be explored
     public Response purgeWithDate(String date, Response response) {
         try {
-            List<Map<String, Object>> scheduleInfoDates = dao.getScheduleInfo();
-            for (Map<String, Object> row : scheduleInfoDates) {
-                String createdOn = (String) row.get("CreatedOn");
-                // Need to use another option
-                createdOn = SIMPLE_DATE_FORMAT1.format(new Date(createdOn));
-                if (StringUtils.compare(date, createdOn) < 1) {
-                    String project = (String) row.get("ProjectName");
-                    String runId = (String) row.get("RunId");
-                    String id = (String) row.get("Id");
-                    try {
-                        dao.deleteExecutionData(id, project, runId);
-                    } catch (Exception e) {
-                        logger.error("Execution data for runId " + runId + " is not auto purged");
-                        continue;
-                    }
-
-                }
-            }
+            purgWithDate(date);
         } catch (Exception e) {
             response.setReturnCode(500);
             response.setStatusText("Fail");
@@ -106,6 +90,11 @@ public class PurgeExecutionService {
 
     // project and run id needed
     public Response purgeWithRunId(String runId, Response response) {
+        purgeWithRunID(runId);
+        return response;
+    }
+
+    public void purgeWithRunID(String runId) {
         List<Map<String, Object>> scheduleInfoWithRunId = dao.getScheduleInfoWithRunId(runId);
 
         scheduleInfoWithRunId.forEach(row -> {
@@ -129,6 +118,26 @@ public class PurgeExecutionService {
                 // e.printStackTrace();
             }
         });
-        return response;
+    }
+
+    private void purgWithDate(String date) {
+        List<Map<String, Object>> scheduleInfoDates = dao.getScheduleInfo();
+        for (Map<String, Object> row : scheduleInfoDates) {
+            String createdOn = (String) row.get("CreatedOn");
+            // Need to use another option
+            createdOn = SIMPLE_DATE_FORMAT1.format(new Date(createdOn));
+            if (StringUtils.compare(date, createdOn) < 1) {
+                String project = (String) row.get("ProjectName");
+                String runId = (String) row.get("RunId");
+                String id = (String) row.get("Id");
+                try {
+                    dao.deleteExecutionData(id, project, runId);
+                } catch (Exception e) {
+                    logger.error("Execution data for runId " + runId + " is not auto purged");
+                    continue;
+                }
+
+            }
+        }
     }
 }

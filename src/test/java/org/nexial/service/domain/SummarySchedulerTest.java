@@ -14,6 +14,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.nexial.commons.utils.ResourceUtils;
+import org.nexial.service.domain.dashboard.service.PurgeExecutionService;
 import org.nexial.service.domain.dbconfig.ApplicationDao;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -22,22 +23,26 @@ import org.springframework.test.context.junit4.SpringRunner;
 @RunWith(SpringRunner.class)
 @SpringBootTest
 public class SummarySchedulerTest {
-    public static String jsonFile = "execution-detail.json";
-    public static String artifactPath = "execution-summary-artifacts";
-    public static String separator = "/";
+    private static String jsonFile = "execution-detail.json";
+    private static String artifactPath = "execution-summary-artifacts";
+    private static String separator = "/";
+    private String SUMMARY_OUTPUT = "/summary_output.json";
 
     @Autowired
     private ApplicationProperties properties;
     @Autowired
     private ApplicationDao dao;
+    @Autowired
+    private PurgeExecutionService purgeService;
 
     @BeforeClass
     public static void tearUp() {
-        File file = new File("nexial-db-test.db");
+        String DB_NAME = "nexial-db-test.db";
+        File file = new File(DB_NAME);
         if (file.exists()) {
             FileUtils.deleteQuietly(file);
         }
-        String resourceFilePath = ResourceUtils.getResourceFilePath("nexial-db-test.db");
+        String resourceFilePath = ResourceUtils.getResourceFilePath(DB_NAME);
         if (resourceFilePath != null) {
             FileUtils.deleteQuietly(new File(resourceFilePath));
         }
@@ -60,15 +65,16 @@ public class SummarySchedulerTest {
 
     @Test
     public void scheduleData() throws InterruptedException, IOException {
+        String project = "NotepadTest";
+        String runId = "20191211_180549";
+        String resourceFilePath = ResourceUtils.getResourceFilePath(artifactPath + separator + project +
+                                                                    separator + runId + separator + jsonFile);
+
         String project1 = "image-compare";
         String runId1 = "20191220_164816";
         String resourceFilePath1 = ResourceUtils.getResourceFilePath(artifactPath + separator + project1 +
                                                                      separator + runId1 + separator + jsonFile);
 
-        String project = "NotepadTest";
-        String runId = "20191211_180549";
-        String resourceFilePath = ResourceUtils.getResourceFilePath(artifactPath + separator + project +
-                                                                    separator + runId + separator + jsonFile);
         // todo need to provide proper
         Thread.sleep(10000);
         dao.insertIntoScheduleInfo(project1, runId1, resourceFilePath1);
@@ -79,11 +85,14 @@ public class SummarySchedulerTest {
         assertSummary(project);
         assertSummary(project1);
 
-        assertData1(project, runId);
-        assertData(project1, runId1);
+        assertInsertedData(project, runId);
+        assertInsertedData1(project1, runId1);
+
+        assertSummaryAfterPurge(project);
+        assertSummaryAfterPurge(project1);
     }
 
-    private void assertData1(String project, String runId) {
+    private void assertInsertedData(String project, String runId) {
         List<Map<String, Object>> scheduleInfoData = dao.getScheduleInfo();
         List<Map<String, Object>> scheduleInfo = scheduleInfoData
                                                      .stream()
@@ -128,30 +137,31 @@ public class SummarySchedulerTest {
         Assert.assertNotNull(steps);
         Assert.assertEquals(5, steps.size());
 
-        dao.deleteExecutionData(scheduleInfoId, project, runId);
+        // dao.deleteExecutionData(scheduleInfoId, project, runId);
+        purgeService.purgeWithRunID(runId);
     }
 
-    private void assertData(String project1, String runId1) {
+    private void assertInsertedData1(String project, String runId) {
         List<Map<String, Object>> scheduleInfoData = dao.getScheduleInfo();
         List<Map<String, Object>> scheduleInfo = scheduleInfoData
                                                      .stream()
-                                                     .filter(row -> (row.get("ProjectName")).equals(project1)
-                                                                    && (row.get("RunId")).equals(runId1))
+                                                     .filter(row -> (row.get("ProjectName")).equals(project)
+                                                                    && (row.get("RunId")).equals(runId))
                                                      .collect(Collectors.toList());
         Assert.assertNotNull(scheduleInfo);
         Assert.assertEquals(1, scheduleInfo.size());
         String scheduleInfoId = (String) scheduleInfo.get(0).get("Id");
 
-        String executionId = dao.getExecutionId(project1, runId1);
+        String executionId = dao.getExecutionId(project, runId);
         Assert.assertNotNull(executionId);
 
-        /*List<Map<String, Object>> executionDatas = dao.getExecutionData1();
+        List<Map<String, Object>> executionDatas = dao.getExecutionData1();
         Assert.assertNotNull(executionDatas);
         Assert.assertEquals(8, executionDatas.size());
 
         List<Map<String, Object>> executionMetaDatas = dao.getExecutionMetaData();
         Assert.assertNotNull(executionMetaDatas);
-        Assert.assertEquals(12, executionMetaDatas.size());*/
+        Assert.assertEquals(12, executionMetaDatas.size());
 
         List<Map<String, Object>> scripts = dao.getScripts(executionId);
         Assert.assertNotNull(scripts);
@@ -187,17 +197,26 @@ public class SummarySchedulerTest {
 
         }
 
-        dao.deleteExecutionData(scheduleInfoId, project1, runId1);
+        // dao.deleteExecutionData(scheduleInfoId, project, runId);
+        purgeService.purgeWithRunID(runId);
     }
 
     private void assertSummary(String project) throws IOException {
         File expectedSummary = new File(ResourceUtils.getResourceFilePath("expected-nexial-summary/" + project +
-                                                                          "/summary_output.json"));
+                                                                          SUMMARY_OUTPUT));
         File actualSummary = new File(properties.getLocalExecutionSummaryPath() + "/" +
-                                      project + "/summary_output.json");
+                                      project + SUMMARY_OUTPUT);
         String expected = FileUtils.readFileToString(expectedSummary, "UTF-8");
         String actual = FileUtils.readFileToString(actualSummary, "UTF-8");
 
         Assert.assertEquals(expected, actual);
+    }
+
+    private void assertSummaryAfterPurge(String project) throws IOException {
+        File actualSummary = new File(properties.getLocalExecutionSummaryPath() + separator +
+                                      project + SUMMARY_OUTPUT);
+        String actual = FileUtils.readFileToString(actualSummary, "UTF-8");
+
+        Assert.assertEquals("{\"results\":[]}", actual);
     }
 }
