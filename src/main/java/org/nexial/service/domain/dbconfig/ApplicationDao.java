@@ -362,8 +362,8 @@ public class ApplicationDao {
     }
 
     @Transactional
-    public List<Map<String, Object>> getScheduleInfoWithRunId(String runId) {
-        return sqLiteConfig.queryForList(getSqlStatement("SQL_SELECT_SCHEDULE_INFO_RUNID"), runId);
+    public List<Map<String, Object>> getScheduleInfoWithRunId(String project, String runId) {
+        return sqLiteConfig.queryForList(getSqlStatement("SQL_SELECT_SCHEDULE_INFO_RUNID"), project, runId);
     }
 
     public int getMaxExecutionCount(String name) {

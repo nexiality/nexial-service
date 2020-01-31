@@ -20,10 +20,11 @@ public class PurgeExecutionController {
 
     public PurgeExecutionController(PurgeExecutionService purgeService) { this.purgeService = purgeService; }
 
-    @RequestMapping(value = {"/purgeWithRunId/{runId}"}, method = RequestMethod.DELETE, produces = {"application/json"})
-    public ResponseEntity<String> purgeDataWithRunID(@PathVariable String runId) {
+    // todo test with UI component
+    @RequestMapping(value = {"/purgeWithRunId/{project}/{runId}"}, method = RequestMethod.DELETE, produces = {"application/json"})
+    public ResponseEntity<String> purgeDataWithRunID(@PathVariable String project, @PathVariable String runId) {
         Response response = new Response("/purge", "", 200, "OK", "");
-        response = purgeService.purgeWithRunId(runId, response);
+        response = purgeService.purgeWithRunId(project, runId, response);
         return ResponseEntity.status(response.getReturnCode())
                              .contentType(MediaType.APPLICATION_JSON).body(GSON.toJson(response));
     }

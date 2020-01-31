@@ -71,7 +71,7 @@ public class SummarySchedulerTest {
     }
 
     @Test
-    public void scheduleData() throws InterruptedException, IOException {
+    public void scheduleData() throws Exception {
         String project = "NotepadTest";
         String runId = "20191211_180549";
         String resourceFilePath = ResourceUtils.getResourceFilePath(artifactPath + separator + project +
@@ -99,7 +99,7 @@ public class SummarySchedulerTest {
         assertSummaryAfterPurge(project1);
     }
 
-    private void assertInsertedData(String project, String runId) {
+    private void assertInsertedData(String project, String runId) throws Exception {
         List<Map<String, Object>> scheduleInfoData = dao.getScheduleInfo();
         List<Map<String, Object>> scheduleInfo = scheduleInfoData
                                                      .stream()
@@ -145,10 +145,10 @@ public class SummarySchedulerTest {
         Assert.assertEquals(5, steps.size());
 
         // dao.deleteExecutionData(scheduleInfoId, project, runId);
-        purgeService.purgeWithRunID(runId);
+        purgeService.purgeWithRunID(project, runId);
     }
 
-    private void assertInsertedData1(String project, String runId) {
+    private void assertInsertedData1(String project, String runId) throws Exception {
         List<Map<String, Object>> scheduleInfoData = dao.getScheduleInfo();
         List<Map<String, Object>> scheduleInfo = scheduleInfoData
                                                      .stream()
@@ -205,7 +205,7 @@ public class SummarySchedulerTest {
         }
 
         // dao.deleteExecutionData(scheduleInfoId, project, runId);
-        purgeService.purgeWithRunID(runId);
+        purgeService.purgeWithRunID(project, runId);
     }
 
     private void assertSummary(String project) throws IOException {

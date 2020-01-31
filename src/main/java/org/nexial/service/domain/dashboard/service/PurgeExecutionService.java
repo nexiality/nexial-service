@@ -82,42 +82,37 @@ PurgeExecutionService {
             purgWithDate(date);
         } catch (Exception e) {
             response.setReturnCode(500);
-            response.setStatusText("Fail");
+            response.setStatusText("FAIL");
             response.setDetailMessage(e.getMessage());
         }
         return response;
     }
 
     // project and run id needed
-    public Response purgeWithRunId(String runId, Response response) {
-        purgeWithRunID(runId);
+    public Response purgeWithRunId(String project, String runId, Response response) {
+        try {
+            purgeWithRunID(project, runId);
+        } catch (Exception e) {
+            response.setReturnCode(500);
+            response.setStatusText("FAIL");
+            response.setDetailMessage(e.getMessage());
+        }
         return response;
     }
 
-    public void purgeWithRunID(String runId) {
-        List<Map<String, Object>> scheduleInfoWithRunId = dao.getScheduleInfoWithRunId(runId);
+    public void purgeWithRunID(String projectName, String runId) throws Exception {
+        List<Map<String, Object>> scheduleInfoWithRunId = dao.getScheduleInfoWithRunId(projectName, runId);
 
-        scheduleInfoWithRunId.forEach(row -> {
+        for (Map<String, Object> row : scheduleInfoWithRunId) {
             String project = (String) row.get("ProjectName");
             String scheduleInfoId = (String) row.get("Id");
             String prefix = StringUtils.substringAfter(runId, ".");
-            try {
-                dao.deleteExecutionData(scheduleInfoId, project, runId);
-            } catch (Exception e) {
-                logger.error("Execution data for runId " + runId + " is not auto purged");
-                return;
-            }
-            try {
-                ProcessExecutionService service1 = factory.getBean(ProcessExecutionService.class);
-                service1.setProject(project);
-                service1.setPrefix(prefix);
-                service1.createSummaryOutput();
-            } catch (Exception e) {
-                logger.error("The generating summary process for project='" + project +
-                             " and prefix='" + prefix + "' has been timed out");
-                // e.printStackTrace();
-            }
-        });
+            dao.deleteExecutionData(scheduleInfoId, project, runId);
+            ProcessExecutionService service = factory.getBean(ProcessExecutionService.class);
+            service.setProject(project);
+            service.setPrefix(prefix);
+            service.createSummaryOutput();
+        }
     }
 
     private void purgWithDate(String date) {
