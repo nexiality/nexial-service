@@ -42,7 +42,7 @@ PurgeExecutionService {
             org.nexial.core.variable.Date date = new org.nexial.core.variable.Date();
             if (Float.parseFloat(date.diff(today, createdDate, "DAY")) > properties.getAutoPurgePeriod()) {
 
-                String project = (String) row.get("ProjectName");
+                String project = (String) row.get("ProjectId");
                 String scheduleInfoId = (String) row.get("Id");
                 String runId = (String) row.get("RunId");
                 logger.error("Execution data for runId " + runId + " for project " + project + " started auto purging");
@@ -69,8 +69,8 @@ PurgeExecutionService {
                 service.setPrefix(prefix);
                 service.createSummaryOutput();
             } catch (Exception e) {
-                logger.error("The generating summary process for project='" + project +
-                             " and prefix='" + prefix + "' has been timed out");
+                logger.error("The generating summary process for project='" + dao.getProjectName(project) +
+                             " and prefix='" + dao.getDashboardName(project, prefix) + "' has been timed out");
                 e.printStackTrace();
             }
         });
@@ -104,7 +104,7 @@ PurgeExecutionService {
         List<Map<String, Object>> scheduleInfoWithRunId = dao.getScheduleInfoWithRunId(projectName, runId);
 
         for (Map<String, Object> row : scheduleInfoWithRunId) {
-            String project = (String) row.get("ProjectName");
+            String project = (String) row.get("ProjectId");
             String scheduleInfoId = (String) row.get("Id");
             String prefix = StringUtils.substringAfter(runId, ".");
             dao.deleteExecutionData(scheduleInfoId, project, runId);

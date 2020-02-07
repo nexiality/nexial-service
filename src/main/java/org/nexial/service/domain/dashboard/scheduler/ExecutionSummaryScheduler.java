@@ -38,8 +38,8 @@ public class ExecutionSummaryScheduler {
         for (Map<String, Object> row : projectList) {
             //check whether there is a worker thread is present or not if yes dont add those project/prefix
             ProcessRecordService processRecordService = beanFactory.getBean(ProcessRecordService.class);
-            String project = (String) row.get("ProjectName");
-            String prefix = (String) row.get("Prefix");
+            String project = (String) row.get("ProjectId");
+            String prefix = (String) row.get("DashboardId");
             long startTime = System.currentTimeMillis();
             int count = processRecordService.getWorkerCount(project, prefix);
 

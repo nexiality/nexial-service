@@ -34,7 +34,7 @@ public class DashboardService {
     }
 
     public void createProject(String project, String dashboard, String description) {
-        dao.insertIntoProjectInfo(project, dashboard, description);
+        dao.insertProject(project, dashboard, description);
     }
 
     public void updateDashboard(String id, String name, String description, String projectId) {

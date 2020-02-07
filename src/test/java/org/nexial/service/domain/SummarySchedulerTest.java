@@ -92,8 +92,8 @@ public class SummarySchedulerTest {
         assertSummary(project);
         assertSummary(project1);
 
-        assertInsertedData(project, runId);
-        assertInsertedData1(project1, runId1);
+        assertInsertedData(dao.getProjectId(project), runId);
+        assertInsertedData1(dao.getProjectId(project1), runId1);
 
         assertSummaryAfterPurge(project);
         assertSummaryAfterPurge(project1);
@@ -103,7 +103,7 @@ public class SummarySchedulerTest {
         List<Map<String, Object>> scheduleInfoData = dao.getScheduleInfo();
         List<Map<String, Object>> scheduleInfo = scheduleInfoData
                                                      .stream()
-                                                     .filter(row -> (row.get("ProjectName")).equals(project)
+                                                     .filter(row -> (row.get("ProjectId")).equals(project)
                                                                     && (row.get("RunId")).equals(runId))
                                                      .collect(Collectors.toList());
         Assert.assertNotNull(scheduleInfo);
@@ -152,7 +152,7 @@ public class SummarySchedulerTest {
         List<Map<String, Object>> scheduleInfoData = dao.getScheduleInfo();
         List<Map<String, Object>> scheduleInfo = scheduleInfoData
                                                      .stream()
-                                                     .filter(row -> (row.get("ProjectName")).equals(project)
+                                                     .filter(row -> (row.get("ProjectId")).equals(project)
                                                                     && (row.get("RunId")).equals(runId))
                                                      .collect(Collectors.toList());
         Assert.assertNotNull(scheduleInfo);

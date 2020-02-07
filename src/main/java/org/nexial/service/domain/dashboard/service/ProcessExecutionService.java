@@ -49,6 +49,8 @@ public class ProcessExecutionService {
     private BeanFactory factory;
     private String project;
     private String prefix;
+    private String projectName;
+    private String dashboardName;
 
     public ProcessExecutionService(ApplicationDao dao, ApplicationProperties properties, BeanFactory factory) {
         this.dao = dao;
@@ -58,16 +60,19 @@ public class ProcessExecutionService {
 
     public void setProject(String project) {
         this.project = project;
+        this.projectName = dao.getProjectName(project);
     }
 
     public void setPrefix(String prefix) {
         this.prefix = prefix;
+        this.dashboardName = dao.getDashboardName(this.project,prefix);
+        if(this.dashboardName == null) this.dashboardName = prefix;
     }
 
     @Transactional
     public void processJsonData(String content) throws IOException {
         JSONObject executionObj = JsonUtils.toJSONObject(content);
-        String executionId = dao.insertExecutionInfo(executionObj, project, prefix);
+        String executionId = dao.insertExecutionInfo(executionObj, project, prefix, projectName);
 
         // adding script details
         String planId = EMPTY;
@@ -86,10 +91,10 @@ public class ProcessExecutionService {
                 if (!StringUtils.equals(planName, planName1)) {
                     planName = planName1;
                     planSequence++;
-                    planId = dao.insertPlanInfo(project, executionId, scriptObj, planSequence, planName1);
+                    planId = dao.insertPlanInfo(projectName, executionId, scriptObj, planSequence, planName1);
                 }
             }
-            String scriptId = dao.insertScriptInfo(project, executionId, planId, sequence, scriptObj);
+            String scriptId = dao.insertScriptInfo(projectName, executionId, planId, sequence, scriptObj);
 
             // add iteration data
             JSONArray iterations = scriptObj.getJSONArray("nestedExecutions");
@@ -134,7 +139,7 @@ public class ProcessExecutionService {
         executionList.sort(Comparator.comparing(row -> StringUtils.substringAfter(row.get("name").toString(), ".")));
         executionList = executionList.subList(0, Math.min(executionList.size(), 90));
         logger.info("/----------------------------------------------------------------\\");
-        logger.info(project + " Size is " + executionList.size());
+        logger.info(projectName + " Size is " + executionList.size());
         logger.info("\\----------------------------------------------------------------/");
 
         for (Map<String, Object> exeObjectMap : executionList) {
@@ -177,14 +182,14 @@ public class ProcessExecutionService {
     }
 
     public void uploadSummaryOutput(String content) throws Exception {
-        String folder = project + (!StringUtils.isEmpty(prefix) ? "." + prefix : "");
+        String folder = projectName + (!StringUtils.isEmpty(dashboardName) ? "." + dashboardName : "");
 
         String summaryPath = properties.getLocalExecutionSummaryPath();
         String path = summaryPath + PATH_SEPARATOR + folder + PATH_SEPARATOR + SUMMARY_OUTPUT_FILE;
         FileUtil.createNewFile(new File(path), content);
         factory.getBean(properties.getStorageLocation(), IFileStorage.class)
                .uploadSummary(new File(path), folder);
-        logger.info("Execution-summary output for project " + project + "." + prefix + " is uploaded on server");
+        logger.info("Execution-summary output for project " + projectName + "." + dashboardName + " is uploaded on server");
     }
 
     @Transactional
@@ -212,7 +217,7 @@ public class ProcessExecutionService {
     protected String getLocalPath(String testScriptLink, String runId) {
         String link = UtilityHelper.getPath(testScriptLink, false);
 
-        return properties.getLocalArtifactsPath() + PATH_SEPARATOR + project + PATH_SEPARATOR +
+        return properties.getLocalArtifactsPath() + PATH_SEPARATOR + projectName + PATH_SEPARATOR +
                runId + PATH_SEPARATOR + StringUtils.substringAfterLast(link, PATH_SEPARATOR);
     }
 
@@ -381,7 +386,7 @@ public class ProcessExecutionService {
             String[] urls = StringUtils.substringsBetween(text, "\"", "\"");
             String link = isWindows ? UtilityHelper.getPath(urls[3], false) : urls[2];
             if (StringUtils.contains(link, project + "/")) {
-                link = StringUtils.substringAfter(link, project + "/");
+                link = StringUtils.substringAfter(link, projectName + "/");
             }
             return link;
         } else if (StringUtils.containsAny(text, "http://", "https://")) {

@@ -118,12 +118,12 @@ public class ApplicationDao {
     }
 
     @Transactional
-    public String insertExecutionInfo(JSONObject execution, String project, String prefix) {
+    public String insertExecutionInfo(JSONObject execution, String project, String prefix, String projectName) {
         String executionId = generateId();
         String name = execution.getString("name");
         String executionLog = UtilityHelper.getPath(JSONPath.find(execution, "nestedExecutions[0].executionLog"),
                                                     false);
-        String location = StringUtils.substringBefore(executionLog, project) + project + PATH_SEPARATOR;
+        String location = StringUtils.substringBefore(executionLog, projectName) + projectName + PATH_SEPARATOR;
         executionLog = StringUtils.substringAfter(executionLog, location);
         String logFile = "output/" + name + "/logs/nexial-" + name + ".log";
         //Todo execution log file location check need to create manually or get from  script
@@ -141,23 +141,23 @@ public class ApplicationDao {
     }
 
     @Transactional
-    public String insertPlanInfo(String project, String executionId, JSONObject scriptObject,
+    public String insertPlanInfo(String projectName, String executionId, JSONObject scriptObject,
                                  int planSequence, String planName1) {
         String planId = generateId();
         String planFile = UtilityHelper.getPath(scriptObject.getString("planFile"), false);
         sqLiteConfig.execute(getSqlStatement("SQL_INSERT_PLAN"), planId, executionId, planName1,
-                             planSequence, StringUtils.substringAfter(planFile, project + "/"));
+                             planSequence, StringUtils.substringAfter(planFile, projectName + "/"));
         return planId;
     }
 
     @Transactional
-    public String insertScriptInfo(String project, String executionId, String planId,
+    public String insertScriptInfo(String projectName, String executionId, String planId,
                                    int sequence, JSONObject scriptObject) {
         String scriptId = generateId();
         String scriptFile = UtilityHelper.getPath(scriptObject.getString("scriptFile"), false);
         sqLiteConfig.execute(getSqlStatement("SQL_INSERT_SCRIPT"),
                              scriptId, scriptObject.getString("name"), sequence, planId,
-                             executionId, StringUtils.substringAfter(scriptFile, project + "/"));
+                             executionId, StringUtils.substringAfter(scriptFile, projectName + "/"));
 
         insertExecutionData(scriptObject, scriptId);
         insertExecutionMetaData(scriptObject, scriptId);
@@ -237,9 +237,41 @@ public class ApplicationDao {
         if (StringUtils.isEmpty(id)) {
             prefix = "";
         }
-        Object[] param = {generateId(), projectName, prefix, runId, RECEIVED, dateNow,
+        String projectId = getProjectId(projectName);
+        String dashboardId = getDashboardId(projectId, prefix);
+        if (projectId == null) {
+            projectId = insertProjectInfo(projectName, null);
+            dashboardId = insertDashboardInfo(prefix, null, projectId);
+        } else if (dashboardId == null) {
+            dashboardId = insertDashboardInfo(prefix, null, projectId);
+        }
+        Object[] param = {generateId(), projectId, dashboardId, runId, RECEIVED, dateNow,
                           dateNow, UtilityHelper.getPath(outputPath, false)};
         sqLiteConfig.execute(getSqlStatement("SQL_INSERT_SCHEDULE_INFO"), param);
+    }
+
+    public String getDashboardId(String projectId, String dashboard) {
+        List<Map<String, Object>> list = sqLiteConfig.queryForList(getSqlStatement("SQL_SELECT_DASHBOARDID"), projectId,
+                                                                   dashboard);
+        return list.isEmpty() ? null : (String) list.get(0).get("Id");
+    }
+
+    public String getProjectId(String projectName) {
+        List<Map<String, Object>> list = sqLiteConfig.queryForList(getSqlStatement("SQL_SELECT_PROJECTID"),
+                                                                   projectName);
+        return list.isEmpty() ? null : (String) list.get(0).get("Id");
+    }
+
+    public String getDashboardName(String projectId, String dashboardId) {
+        List<Map<String, Object>> list = sqLiteConfig.queryForList(getSqlStatement("SQL_SELECT_DASHBOARD_NAME"), projectId,
+                                                                   dashboardId);
+        return list.isEmpty() ? null : (String) list.get(0).get("Name");
+    }
+
+    public String getProjectName(String projectId) {
+        List<Map<String, Object>> list = sqLiteConfig.queryForList(getSqlStatement("SQL_SELECT_PROJECT_NAME"),
+                                                                   projectId);
+        return list.isEmpty() ? null : (String) list.get(0).get("Name");
     }
 
     @Transactional
@@ -274,18 +306,24 @@ public class ApplicationDao {
                              status, processingDate, runId);
     }
 
-    public void insertIntoProjectInfo(String project, String dashboard, String description) {
-        String date = SIMPLE_DATE_FORMAT.format(new Date());
-        String projectId = generateId();
-        int result = sqLiteConfig.execute(getSqlStatement("SQL_INSERT_PROJECTINFO"),
-                                          projectId, project, description, date, date);
-        if (result == 1) { insertDashboardInfo(dashboard, description, projectId);}
+    public void insertProject(String project, String dashboard, String description) {
+        String projectId = insertProjectInfo(project, description);
+        insertDashboardInfo(dashboard, description, projectId);
     }
 
-    public void insertDashboardInfo(String dashboard, String description, String projectId) {
+    private String insertProjectInfo(String project, String description) {
         String date = SIMPLE_DATE_FORMAT.format(new Date());
+        String projectId = generateId();
+        sqLiteConfig.execute(getSqlStatement("SQL_INSERT_PROJECTINFO"), projectId, project, description, date, date);
+        return projectId;
+    }
+
+    public String insertDashboardInfo(String dashboard, String description, String projectId) {
+        String date = SIMPLE_DATE_FORMAT.format(new Date());
+        String dashboardId = generateId();
         sqLiteConfig.execute(getSqlStatement("SQL_INSERT_DASHBOARDINFO"),
-                             generateId(), dashboard, description, projectId, date, date);
+                             dashboardId, dashboard, description, projectId, date, date);
+        return dashboardId;
     }
 
     public void updateProjectInfo(String id, String name, String description) {
